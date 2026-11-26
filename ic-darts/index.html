@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ปาเป้าพิชิตเชื้อ 3D — เกมความรู้ป้องกันและควบคุมการติดเชื้อ</title>
+<meta name="description" content="เกมปาลูกดอก 3 มิติ 6 ฉาก 18 ด่าน ฝึกความรู้การป้องกันและควบคุมการติดเชื้อ: ไล่เชื้อโรค PPE แยกขยะ 5 Moments ล้างมือ 7 ขั้นตอน และ Isolation precautions">
+<meta property="og:title" content="ปาเป้าพิชิตเชื้อ 3D">
+<meta property="og:description" content="เกมปาลูกดอก 3 มิติ ธีมป้องกันและควบคุมการติดเชื้อ 6 ฉาก 18 ด่าน สะสมเหรียญ แลกไอเทม ดูอันดับ">
+<meta name="theme-color" content="#0f172a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f172a;--glass:rgba(15,23,42,.66);--line:rgba(255,255,255,.16);--ok:#22c55e;--bad:#ef4444;--gold:#fbbf24}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;min-width:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1120;color:#fff;font-family:Kanit,system-ui,-apple-system,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,select{font-family:inherit;font-size:16px}
+.glass{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px}
+/* HUD */
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 0;display:none;pointer-events:none;z-index:5}
+#hud .row{display:flex;gap:8px;align-items:stretch}
+#hud .pill{padding:6px 12px;font-size:14px;line-height:1.25;white-space:nowrap}
+#hud .pill b{font-size:18px;display:block}
+#hud .grow{flex:1;overflow:hidden;text-overflow:ellipsis}
+#hud .btn{pointer-events:auto;border:1px solid var(--line);background:var(--glass);border-radius:14px;width:44px;font-size:20px}
+#card{margin:8px auto 0;max-width:560px;padding:10px 14px;text-align:center;font-size:15px;display:none}
+#card .big{font-size:22px;font-weight:800;line-height:1.3}
+#card .em{font-size:38px;line-height:1.1;display:block}
+#card .small{opacity:.85;font-size:13px}
+#bar{height:6px;border-radius:6px;background:rgba(255,255,255,.15);margin-top:6px;overflow:hidden}
+#bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#22c55e,#facc15,#ef4444);transform-origin:left}
+#tools{position:fixed;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:8px;z-index:6}
+#tools .tb{position:relative;width:52px;height:52px;border-radius:16px;border:1px solid var(--line);background:var(--glass);font-size:24px;pointer-events:auto}
+#tools .tb small{position:absolute;right:-4px;top:-6px;background:#f59e0b;color:#111;border-radius:10px;font-size:12px;font-weight:800;padding:0 6px}
+#tools .tb.off{opacity:.35}
+#tools .act{width:52px;text-align:center;font-size:20px;padding:4px 0}
+#hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);padding:8px 16px;font-size:14px;display:none;pointer-events:none;z-index:5;white-space:nowrap}
+#aim{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;pointer-events:none;display:none;z-index:6}
+#aim:before,#aim:after{content:"";position:absolute;background:#fff;box-shadow:0 0 4px #000}
+#aim:before{left:22px;top:0;width:2px;height:46px}#aim:after{top:22px;left:0;height:2px;width:46px}
+#aim i{position:absolute;inset:9px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px rgba(0,0,0,.8)}
+#aim.steady i{border-color:#86efac}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:7;overflow:hidden}
+.pop{position:absolute;transform:translate(-50%,-50%);font-weight:800;font-size:24px;white-space:nowrap;text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 10px rgba(0,0,0,.6);animation:up 1.3s ease-out forwards}
+.pop.ok{color:#86efac}.pop.bad{color:#fca5a5}.pop.info{color:#fde68a;font-size:16px}
+@keyframes up{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-160%) scale(1)}}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 60px);transform:translateX(-50%);max-width:min(560px,92vw);padding:10px 14px;font-size:14px;line-height:1.45;display:none;z-index:8;text-align:left}
+#toast b{color:#fde68a}
+/* Screens */
+.screen{position:fixed;inset:0;z-index:20;display:none;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px);overflow:auto;background:radial-gradient(ellipse at top,rgba(30,64,175,.35),transparent 60%),rgba(2,6,23,.74)}
+.screen.show{display:flex}
+.panel{width:100%;max-width:820px;padding:18px;margin:auto}
+h1{margin:0;font-size:clamp(26px,6vw,40px);line-height:1.15;text-align:center;font-weight:800;background:linear-gradient(90deg,#67e8f9,#a7f3d0,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{margin:0 0 8px;font-size:22px}
+.sub{text-align:center;opacity:.85;margin:6px 0 14px;font-size:15px}
+.logo{text-align:center;font-size:44px;line-height:1}
+.credit{text-align:center;font-size:12px;opacity:.6;margin-top:12px}
+.btn-main{display:block;width:100%;padding:13px;border:0;border-radius:14px;font-size:17px;font-weight:800;color:#0f172a;background:linear-gradient(90deg,#67e8f9,#86efac);margin-top:10px}
+.btn-main:disabled{opacity:.45}
+.btn-sub{display:block;width:100%;padding:11px;border:1px solid var(--line);border-radius:14px;font-size:15px;background:rgba(255,255,255,.06);margin-top:8px}
+.row2{display:flex;gap:8px}.row2>*{flex:1}
+/* top bar */
+.topbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.me{flex:1 1 220px;display:flex;gap:10px;align-items:center;padding:8px 12px}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:800;background:linear-gradient(135deg,#22d3ee,#a78bfa);color:#0f172a;flex:none}
+.me .nm{font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me .un{font-size:12.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.coin{padding:8px 14px;font-weight:800;font-size:18px;color:#fde68a;white-space:nowrap}
+.tbtn{padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--glass);font-size:15px;white-space:nowrap}
+.sync{font-size:12px;opacity:.75;text-align:right;margin:-6px 4px 8px}
+/* level map */
+.tier{margin:14px 0 6px;font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}
+.tier span{font-weight:400;font-size:13px;opacity:.75}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:10px}
+.lv{position:relative;border:0;border-radius:16px;padding:10px 10px 8px;text-align:left;min-height:118px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.lv .no{font-size:12px;opacity:.9}
+.lv .em{font-size:30px;line-height:1.1}
+.lv .t{font-weight:800;font-size:15px;line-height:1.2}
+.lv .s{font-size:12.5px;opacity:.9}
+.lv .st{position:absolute;right:8px;top:6px;font-size:14px;letter-spacing:1px;color:#fde68a;text-shadow:0 1px 2px #000}
+.lv.lock{filter:grayscale(1) brightness(.55)}
+.lv.lock:after{content:"🔒";position:absolute;inset:0;display:grid;place-items:center;font-size:30px}
+.lv.next{outline:3px solid #fde68a;animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{outline-color:rgba(253,230,138,.25)}}
+/* forms */
+.fld{margin:10px 0}.fld label{display:block;font-size:14px;margin-bottom:4px;opacity:.9}
+.inp{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;outline:none}
+.inp:focus{border-color:#67e8f9}
+select.inp option{color:#0f172a}
+.err{color:#fca5a5;font-size:14px;min-height:20px;margin-top:6px}
+.note{font-size:12.5px;opacity:.75;line-height:1.5}
+.plist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.plist button{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);text-align:left}
+/* segmented */
+.seg{display:flex;gap:6px;margin:6px 0 10px}
+.seg button{flex:1;padding:10px 4px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:15px;line-height:1.2}
+.seg button small{display:block;font-size:11.5px;opacity:.8}
+.seg button.on{background:linear-gradient(135deg,#0891b2,#059669);border-color:#67e8f9;font-weight:800}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.it{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);text-align:left;font-size:14px;line-height:1.25}
+.it .e{font-size:24px}
+.it.on{background:rgba(34,197,94,.22);border-color:#86efac}
+.it:disabled{opacity:.4}
+.it small{display:block;opacity:.75;font-size:12px}
+/* shop */
+.tabs{display:flex;gap:6px;margin:6px 0 12px;overflow-x:auto}
+.tabs button{flex:none;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:15px}
+.tabs button.on{background:#0e7490;border-color:#67e8f9;font-weight:800}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.sc{padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;flex-direction:column;gap:4px}
+.sc .e{font-size:32px;line-height:1.1}
+.sc .n{font-weight:800}
+.sc .d{font-size:12.5px;opacity:.8;flex:1;line-height:1.4}
+.sc button{padding:9px;border-radius:10px;border:0;font-weight:800;font-size:14px;background:#fde68a;color:#111}
+.sc button.eq{background:#86efac}
+.sc button.own{background:rgba(255,255,255,.12);color:#fff}
+.sc button:disabled{opacity:.45}
+/* stats */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.kc{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.kc b{display:block;font-size:24px;line-height:1.2;color:#fde68a;white-space:nowrap}
+.kc span{font-size:12.5px;opacity:.8}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left}
+th{font-size:12.5px;opacity:.75;font-weight:600}
+td.r,th.r{text-align:right;white-space:nowrap}
+tr.meRow td{background:rgba(103,232,249,.12)}
+.scroll{overflow-x:auto}
+/* results */
+#res .score{font-size:46px;font-weight:800;text-align:center;color:var(--gold);line-height:1.1}
+#res .stars{text-align:center;font-size:38px;letter-spacing:4px;margin:4px 0;color:#fde68a}
+#res .gain{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+#res .gain span{padding:4px 12px;border-radius:12px;background:rgba(253,230,138,.15);border:1px solid rgba(253,230,138,.4);font-weight:600}
+#res .lines{font-size:14px;line-height:1.6;max-height:30vh;overflow:auto;padding:8px 12px;margin-top:8px}
+#res .lines div{border-bottom:1px dashed rgba(255,255,255,.12);padding:3px 0}
+#loading{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0b1120;font-size:18px}
+#err{display:none;position:fixed;inset:0;z-index:60;background:#0b1120;padding:30px;text-align:center}
+/* race + lobby */
+#race{position:fixed;left:10px;top:52%;transform:translateY(-50%);z-index:6;display:none;padding:8px 10px;font-size:13px;min-width:150px;max-width:44vw;pointer-events:none}
+#race .rr{display:flex;gap:6px;align-items:center;padding:2px 0;white-space:nowrap}
+#race .rr b{margin-left:auto;color:#fde68a}
+#race .rr.me{color:#67e8f9;font-weight:800}
+#race .rr span{overflow:hidden;text-overflow:ellipsis}
+#count{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;font-size:120px;font-weight:800;color:#fde68a;text-shadow:0 6px 30px rgba(0,0,0,.7);pointer-events:none}
+.online{padding:8px 12px;font-size:15px;white-space:nowrap;border:1px solid rgba(134,239,172,.5);border-radius:14px;background:rgba(22,101,52,.45)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;margin-right:6px;animation:glow2 1.6s infinite}
+@keyframes glow2{50%{opacity:.35}}
+.lb{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media(max-width:700px){.lb{grid-template-columns:minmax(0,1fr)}}
+.box{padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05)}
+.box h3{margin:0 0 6px;font-size:17px}
+.code{font-size:44px;font-weight:800;letter-spacing:8px;text-align:center;color:#fde68a;line-height:1.1}
+.plr{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+.plr .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plr button{padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:#0e7490;font-size:13px}
+.olist{max-height:240px;overflow:auto}
+.tag{font-size:11px;padding:1px 7px;border-radius:8px;background:rgba(255,255,255,.12)}
+#toast button{margin:8px 6px 0 0;padding:7px 12px;border-radius:10px;border:0;font-weight:800;background:#86efac;color:#111}
+#toast{pointer-events:auto}
+#modal{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.6);padding:16px}
+#modal .panel{max-width:380px;text-align:center}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="loading">กำลังเตรียมฉาก 3 มิติ…</div>
+<div id="err"><h2>⚠️ โหลดระบบ 3 มิติไม่สำเร็จ</h2><p>ลองเชื่อมต่ออินเทอร์เน็ตแล้วโหลดใหม่ หรือเปิดด้วย Chrome / Safari</p><button class="btn-main" style="max-width:240px;margin:auto" onclick="location.reload()">โหลดใหม่</button></div>
+
+<div id="hud">
+  <div class="row">
+    <button class="btn" id="home-btn" title="ออกจากด่าน">☰</button>
+    <div class="pill glass grow"><span id="h-scene">-</span><b id="h-task">-</b></div>
+    <div class="pill glass" style="text-align:right">คะแนน<b id="h-score">0</b></div>
+  </div>
+  <div id="card" class="glass"></div>
+</div>
+<div id="tools"></div>
+<div id="race" class="glass"></div>
+<div id="count"></div>
+<div id="hint" class="glass">👆 แตะค้างเพื่อง้างลูกดอก · ปล่อยนิ้วเพื่อปา</div>
+<div id="aim"><i></i></div>
+<div id="fx"></div>
+<div id="toast" class="glass"></div>
+
+<!-- ลงทะเบียน -->
+<div id="reg" class="screen">
+  <div class="panel glass" style="max-width:440px">
+    <div class="logo">🎯</div>
+    <h1>ปาเป้าพิชิตเชื้อ 3D</h1>
+    <div class="sub">ลงทะเบียนเพื่อเก็บคะแนน สะสมเหรียญ และดูอันดับ</div>
+    <div class="fld"><label for="r-name">ชื่อผู้เล่น (ชื่อ-สกุล หรือชื่อเล่น)</label><input id="r-name" class="inp" maxlength="30" autocomplete="name" placeholder="เช่น พยาบาลมุก"></div>
+    <div class="fld"><label for="r-unit">หน่วยงาน</label><select id="r-unit" class="inp"></select></div>
+    <div class="fld" id="r-unit2-w" style="display:none"><label for="r-unit2">ระบุหน่วยงาน</label><input id="r-unit2" class="inp" maxlength="40"></div>
+    <div class="fld"><label for="r-pin">รหัส PIN 4 หลัก (ใช้เข้าเล่นต่อในเครื่องอื่น)</label><input id="r-pin" class="inp" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="••••"></div>
+    <div class="err" id="r-err"></div>
+    <button class="btn-main" id="r-go">✅ ลงทะเบียน / เข้าสู่ระบบ</button>
+    <div class="note" id="r-note" style="margin-top:8px"></div>
+    <div id="r-local"></div>
+  </div>
+</div>
+
+<!-- หน้าหลัก: แผนที่ด่าน -->
+<div id="home" class="screen">
+  <div class="panel">
+    <div class="topbar">
+      <div class="me glass"><div class="av" id="m-av">?</div><div style="min-width:0"><div class="nm" id="m-name">-</div><div class="un" id="m-unit">-</div></div></div>
+      <button class="online" id="m-online" style="display:none"><span class="dot"></span><span id="m-on-n">0</span> ออนไลน์</button>
+      <div class="coin glass" id="m-coin">🪙 0</div>
+      <button class="tbtn" id="go-shop">🛒 ร้านค้า</button>
+      <button class="tbtn" id="go-stats">📊 สถิติ</button>
+      <button class="tbtn" id="go-player">👤</button>
+    </div>
+    <div class="sync" id="m-sync"></div>
+    <div class="logo">🎯</div>
+    <h1>ปาเป้าพิชิตเชื้อ 3D</h1>
+    <div class="sub">6 ฉาก · 18 ด่าน · ผ่านด่าน (ได้ ★ อย่างน้อย 1 ดวง) เพื่อปลดล็อกด่านถัดไป</div>
+    <div id="map"></div>
+    <div class="credit">หน่วยป้องกันและควบคุมการติดเชื้อ โรงพยาบาลบุรีรัมย์</div>
+  </div>
+</div>
+
+<!-- ก่อนเริ่มด่าน -->
+<div id="pre" class="screen">
+  <div class="panel glass" style="max-width:520px">
+    <div class="logo" id="p-em">🏥</div>
+    <h1 id="p-title">-</h1>
+    <div class="sub" id="p-desc"></div>
+    <div style="font-weight:800">โหมดการเล่น</div>
+    <div class="seg" id="p-mode"></div>
+    <div class="seg" id="p-bots" style="display:none"></div>
+    <div style="font-weight:800">ระดับความยาก</div>
+    <div class="seg" id="p-diff"></div>
+    <div style="font-weight:800;margin-top:4px">ไอเทมที่จะใช้ในด่านนี้ <span class="note">(เลือกได้สูงสุด 3 อย่าง)</span></div>
+    <div class="items" id="p-items" style="margin-top:6px"></div>
+    <div class="note" style="margin-top:6px">ไอเทมจะถูกใช้เมื่อเริ่มด่าน (💡 เฉลย หักเมื่อกดใช้จริงเท่านั้น) · ซื้อเพิ่มได้ที่ร้านค้า</div>
+    <button class="btn-main" id="p-go">▶ เริ่มด่าน</button>
+    <button class="btn-sub" id="p-back">← กลับแผนที่ด่าน</button>
+  </div>
+</div>
+
+<!-- ห้องรอ: เล่นกับเพื่อน -->
+<div id="lobby" class="screen">
+  <div class="panel glass">
+    <div class="topbar" style="margin:0 0 8px"><h2 style="flex:1;margin:0">👥 เล่นกับเพื่อน</h2><div class="online"><span class="dot"></span><span id="l-on-n">0</span> คนออนไลน์ตอนนี้</div></div>
+    <div class="note" id="l-level"></div>
+    <div id="l-body" style="margin-top:10px"></div>
+    <button class="btn-sub" id="l-back">← กลับ</button>
+  </div>
+</div>
+
+<!-- ร้านค้า -->
+<div id="shop" class="screen">
+  <div class="panel glass">
+    <div class="topbar" style="margin:0"><h2 style="flex:1;margin:0">🛒 ร้านค้า</h2><div class="coin" id="s-coin">🪙 0</div></div>
+    <div class="note">หาเหรียญจากการเล่น: คะแนนสูง ได้ดาว ผ่านด่านครั้งแรก และโบนัสรายวัน · เล่นระดับยากได้เหรียญ ×1.6</div>
+    <div class="tabs" id="s-tabs"></div>
+    <div class="sgrid" id="s-grid"></div>
+    <button class="btn-sub" id="s-back">← กลับ</button>
+  </div>
+</div>
+
+<!-- สถิติ -->
+<div id="stats" class="screen">
+  <div class="panel glass">
+    <h2>📊 สถิติและอันดับ</h2>
+    <div class="tabs" id="t-tabs"></div>
+    <div id="t-body"></div>
+    <button class="btn-sub" id="t-back">← กลับ</button>
+  </div>
+</div>
+
+<!-- ผลการเล่น -->
+<div id="res" class="screen">
+  <div class="panel glass" style="max-width:480px">
+    <h1 id="res-title">สรุปผล</h1>
+    <div class="stars" id="res-stars"></div>
+    <div class="score" id="res-score">0</div>
+    <div class="sub" id="res-sub"></div>
+    <div class="gain" id="res-gain"></div>
+    <div class="lines glass" id="res-lines"></div>
+    <button class="btn-main" id="res-next">➡️ ด่านถัดไป</button>
+    <div class="row2"><button class="btn-sub" id="res-again">🔁 เล่นอีกครั้ง</button><button class="btn-sub" id="res-menu">🗺️ แผนที่ด่าน</button></div>
+  </div>
+</div>
+
+<div id="modal"><div class="panel glass"><div id="mo-text" style="font-size:16px;line-height:1.5"></div><div class="row2"><button class="btn-sub" id="mo-no">ยกเลิก</button><button class="btn-main" id="mo-yes" style="margin-top:8px">ตกลง</button></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script>
+'use strict';
+/* ========================================================================
+   ตั้งค่า: วาง URL ของ Web App (Google Apps Script) เพื่อเปิดระบบออนไลน์
+   (ลงทะเบียนข้ามเครื่อง + อันดับรวมทั้งโรงพยาบาล) — ว่างไว้ = เก็บในเครื่องอย่างเดียว
+   ======================================================================== */
+const CONFIG = {
+  API_URL: '',
+  UNITS: ['หอผู้ป่วยอายุรกรรม', 'หอผู้ป่วยศัลยกรรม', 'หอผู้ป่วยกุมารเวชกรรม', 'หอผู้ป่วยสูติ-นรีเวชกรรม', 'หอผู้ป่วยออร์โธปิดิกส์', 'หอผู้ป่วยพิเศษ', 'ICU', 'ห้องผ่าตัด', 'ห้องฉุกเฉิน (ER)', 'ผู้ป่วยนอก (OPD)', 'ห้องคลอด', 'ไตเทียม', 'หน่วยจ่ายกลาง (CSSD)', 'งานป้องกันและควบคุมการติดเชื้อ', 'นักศึกษา/ผู้ฝึกงาน', 'อื่นๆ (ระบุ)'],
+};
+(function () {
+if (!window.THREE) { document.getElementById('loading').style.display = 'none'; document.getElementById('err').style.display = 'block'; return; }
+const $ = id => document.getElementById(id);
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+let srand = Math.random;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(srand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get(k, d) { try { const v = localStorage.getItem('icdarts.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('icdarts.' + k, JSON.stringify(v)); } catch (e) {} } };
+const FONT = 'Kanit, system-ui, sans-serif';
+const today = () => new Date().toISOString().slice(0, 10);
+
+/* ================= Renderer ================= */
+const canvas = $('c');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+catch (e) { $('loading').style.display = 'none'; $('err').style.display = 'block'; return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, 1, 0.03, 200);
+scene.add(camera);
+const MAXANISO = renderer.capabilities.getMaxAnisotropy();
+let camBase = { pos: new THREE.Vector3(0, 1.6, 4.3), look: new THREE.Vector3(0, 1.7, -1.4) };
+const portrait = () => camera.aspect < 0.85;
+const halfW = z => Math.tan(camera.fov * Math.PI / 360) * camera.aspect * (camBase.pos.z - z);
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.fov = w / h < 0.75 ? 72 : w / h < 1.1 ? 62 : 52; camera.updateProjectionMatrix();
+  if (window.__handBase) { const P = w / h < 0.85; window.__handBase.position.set(P ? 0.11 : 0.27, P ? -0.3 : -0.26, P ? -0.6 : -0.64); }
+}
+addEventListener('resize', resize); resize();
+
+/* ================= Helpers: textures & meshes ================= */
+function ctex(w, h, draw, repeat) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = MAXANISO;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+  return t;
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function fitText(g, text, maxW, size, weight) { let s = size; do { g.font = `${weight || 800} ${s}px ${FONT}`; s -= 2; } while (g.measureText(text).width > maxW && s > 10); return s + 2; }
+function M(color, o) { return new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.75, metalness: 0 }, o || {})); }
+function mesh(geo, mat, x, y, z, parent, shadow) {
+  const m = new THREE.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0);
+  if (shadow !== false) { m.castShadow = true; m.receiveShadow = true; }
+  if (parent) parent.add(m); return m;
+}
+const box = (w, h, d, mat, x, y, z, p, s) => mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z, p, s);
+const cyl = (rt, rb, h, mat, x, y, z, p, seg) => mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 24), mat, x, y, z, p);
+function shade(hex, amt) { const n = parseInt(hex.slice(1), 16); const f = v => Math.max(0, Math.min(255, v + amt)); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+function tileTex(c1, c2, n, grout) {
+  return ctex(512, 512, (g, w) => {
+    g.fillStyle = grout; g.fillRect(0, 0, w, w); const s = w / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      g.fillStyle = shade((i + j) % 2 ? c1 : c2, Math.random() * 14 - 7); g.fillRect(i * s + 2, j * s + 2, s - 4, s - 4);
+      g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(i * s + 2, j * s + 2, s - 4, (s - 4) * 0.35);
+    }
+  }, [6, 6]);
+}
+function signTex(lines, bg, fg, w, h, opt) {
+  opt = opt || {};
+  return ctex(w || 512, h || 256, (g, W, H) => {
+    rr(g, 4, 4, W - 8, H - 8, opt.r == null ? 28 : opt.r); g.fillStyle = bg; g.fill();
+    if (opt.border) { g.lineWidth = 8; g.strokeStyle = opt.border; g.stroke(); }
+    g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const lh = H / (lines.length + 0.4);
+    lines.forEach((l, i) => { const big = i === 0; fitText(g, l, W - 40, big ? lh * 0.78 : lh * 0.55, big ? 800 : 600); g.fillText(l, W / 2, lh * (i + 0.7)); });
+  });
+}
+function plane(w, h, tex, x, y, z, parent, emissive) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), emissive
+    ? new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false })
+    : new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.6 }));
+  m.position.set(x, y, z); if (parent) parent.add(m); m.receiveShadow = !emissive; return m;
+}
+function skyTex(stops) { return ctex(64, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); stops.forEach(s => gr.addColorStop(s[0], s[1])); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); }
+
+/* ================= Room pieces ================= */
+function room(G, o) {
+  const { w, d, h } = o; const back = [];
+  const floor = mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: o.floor, roughness: o.floorRough == null ? 0.55 : o.floorRough, metalness: 0.05 }), 0, 0, 0, G);
+  floor.rotation.x = -Math.PI / 2; floor.position.z = o.zBack + d / 2; back.push(floor);
+  const wallM = M(o.wall, { roughness: 0.9 });
+  back.push(box(w, h, 0.1, wallM, 0, h / 2, o.zBack - 0.05, G));
+  back.push(box(0.1, h, d, wallM, -w / 2, h / 2, o.zBack + d / 2, G));
+  back.push(box(0.1, h, d, wallM, w / 2, h / 2, o.zBack + d / 2, G));
+  back.push(box(w, 0.1, d, M(o.ceil || '#f1f5f9', { roughness: 1 }), 0, h + 0.05, o.zBack + d / 2, G));
+  const wm = M(o.band || '#94a3b8', { roughness: 0.5 });
+  box(w, 0.9, 0.04, wm, 0, 0.45, o.zBack + 0.02, G);
+  box(0.04, 0.9, d, wm, -w / 2 + 0.07, 0.45, o.zBack + d / 2, G);
+  box(0.04, 0.9, d, wm, w / 2 - 0.07, 0.45, o.zBack + d / 2, G);
+  const lp = new THREE.MeshBasicMaterial({ color: o.lightColor || '#fffdf5', toneMapped: false });
+  for (let x = -w / 2 + 2; x <= w / 2 - 2; x += 4) for (let z = o.zBack + 1.5; z < o.zBack + d - 1; z += 3) box(1.2, 0.03, 0.6, lp, x, h - 0.01, z, G, false);
+  return back;
+}
+function bed(G, x, z, rot, color, stretcher) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot || 0; G.add(g);
+  const metal = M('#cbd5e1', { metalness: 0.6, roughness: 0.35 });
+  box(stretcher ? 0.75 : 1.05, 0.12, 2.1, metal, 0, 0.55, 0, g);
+  for (const sx of [-0.34, 0.34]) for (const sz of [-0.95, 0.95]) { cyl(0.03, 0.03, 0.55, metal, sx * (stretcher ? 1 : 1.4), 0.28, sz, g, 8); if (stretcher) cyl(0.07, 0.07, 0.04, M('#111827'), sx, 0.07, sz, g, 14).rotation.z = Math.PI / 2; }
+  box(stretcher ? 0.7 : 1, 0.16, 2.0, M('#f8fafc', { roughness: 0.95 }), 0, 0.7, 0, g);
+  box(stretcher ? 0.72 : 1.02, 0.08, 1.2, M(color || '#93c5fd', { roughness: 0.95 }), 0, 0.8, 0.35, g);
+  box(0.6, 0.12, 0.34, M('#ffffff', { roughness: 1 }), 0, 0.84, -0.7, g);
+  if (!stretcher) {
+    box(1.1, 0.7, 0.06, M('#e2e8f0', { roughness: 0.4 }), 0, 0.9, -1.05, g);
+    box(1.1, 0.45, 0.06, M('#e2e8f0', { roughness: 0.4 }), 0, 0.78, 1.05, g);
+  }
+  for (const sx of [-0.55, 0.55]) box(0.03, 0.22, 0.9, metal, sx * (stretcher ? 0.7 : 1), 0.95, -0.3, g);
+  return g;
+}
+function curtain(G, x, z, w, h, color, rot) {
+  const geo = new THREE.PlaneGeometry(w, h, 40, 1); const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 14) * 0.06);
+  geo.computeVertexNormals();
+  const m = mesh(geo, M(color, { side: THREE.DoubleSide, roughness: 1 }), x, 3.3 - h / 2 - 0.08, z, G); m.rotation.y = rot || 0;
+  const rail = cyl(0.015, 0.015, w + 0.2, M('#94a3b8', { metalness: .7, roughness: .3 }), x, 3.3, z, G, 6); rail.rotation.set(0, rot || 0, Math.PI / 2);
+  return m;
+}
+function ivStand(G, x, z) {
+  const metal = M('#e5e7eb', { metalness: .8, roughness: .25 });
+  cyl(0.015, 0.015, 1.9, metal, x, 0.95, z, G, 8); cyl(0.25, 0.25, 0.03, metal, x, 0.05, z, G, 5);
+  return box(0.16, 0.26, 0.05, new THREE.MeshPhysicalMaterial({ color: '#e0f2fe', transparent: true, opacity: .75, roughness: .1 }), x + 0.12, 1.75, z, G);
+}
+function monitor(G, x, y, z, rot, hue) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot || 0; G.add(g);
+  box(0.62, 0.44, 0.08, M('#1f2937', { roughness: .4 }), 0, 0, 0, g);
+  const t = ctex(256, 180, (c, w, h) => {
+    c.fillStyle = '#020617'; c.fillRect(0, 0, w, h);
+    [['#22c55e', 30, 'HR 78'], ['#38bdf8', 85, 'SpO2 98'], ['#facc15', 140, 'BP 118/76']].forEach(([col, yy, txt]) => {
+      c.strokeStyle = col; c.lineWidth = 3; c.beginPath();
+      for (let i = 0; i < 170; i++) { const v = (i % 42 === 20) ? -18 : (i % 42 === 22 ? 12 : Math.sin(i * .3) * 2); i ? c.lineTo(i, yy + v) : c.moveTo(i, yy + v); }
+      c.stroke(); c.fillStyle = col; c.font = `700 20px ${FONT}`; c.fillText(txt, 176, yy + 6);
+    });
+  });
+  plane(0.56, 0.38, t, 0, 0, 0.041, g, true);
+  const l = new THREE.PointLight(hue || '#38bdf8', 0.5, 2.2); l.position.set(0, 0, 0.3); g.add(l);
+  return g;
+}
+function dispenser(G, x, y, z, rot) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot || 0; G.add(g);
+  box(0.18, 0.3, 0.1, M('#f8fafc', { roughness: .3 }), 0, 0, 0, g);
+  box(0.12, 0.08, 0.02, M('#0ea5e9', { roughness: .3 }), 0, 0.06, 0.055, g);
+  box(0.08, 0.04, 0.08, M('#cbd5e1'), 0, -0.17, 0.03, g);
+  return g;
+}
+function poster(G, lines, x, y, z, rot, w, h, bg, fg) {
+  const m = plane(w || 1.1, h || 0.75, signTex(lines, bg || '#ffffff', fg || '#0f172a', 512, Math.round(512 * (h || 0.75) / (w || 1.1)), { border: '#0ea5e9' }), x, y, z, G);
+  m.rotation.y = rot || 0; return m;
+}
+function windowPane(G, x, y, z, w, h, tex, rot) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot || 0; G.add(g);
+  const frame = M('#f1f5f9', { roughness: .4 });
+  box(w + 0.12, 0.08, 0.1, frame, 0, h / 2, 0, g); box(w + 0.12, 0.08, 0.1, frame, 0, -h / 2, 0, g);
+  box(0.08, h, 0.1, frame, -w / 2, 0, 0, g); box(0.08, h, 0.1, frame, w / 2, 0, 0, g); box(0.05, h, 0.06, frame, 0, 0, 0, g);
+  plane(w, h, tex, 0, 0, -0.02, g, true);
+  return g;
+}
+function tree(G, x, z, s) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s || 1); G.add(g);
+  cyl(0.12, 0.18, 1.6, M('#6b4423', { roughness: 1 }), 0, 0.8, 0, g, 8);
+  const leaf = M('#3f8f3a', { roughness: 1, flatShading: true });
+  [[0, 2.1, 0, 0.9], [0.5, 1.8, 0.2, 0.65], [-0.5, 1.9, -0.1, 0.7], [0.1, 2.6, 0.1, 0.6]].forEach(([a, b, c, r]) => mesh(new THREE.IcosahedronGeometry(r, 1), leaf, a, b, c, g));
+  return g;
+}
+function lightsIndoor(G, o) {
+  G.add(new THREE.HemisphereLight(o.sky || '#ffffff', o.ground || '#94a3b8', o.hemi == null ? 0.75 : o.hemi));
+  const d = new THREE.DirectionalLight(o.sun || '#fff7e6', o.sunI == null ? 1.6 : o.sunI);
+  d.position.set(...(o.sunPos || [-6, 7, 4])); d.castShadow = true; d.shadow.mapSize.set(1024, 1024);
+  Object.assign(d.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 30 }); d.shadow.bias = -0.0005;
+  G.add(d); G.add(d.target); d.target.position.set(0, 0, -1);
+  return d;
+}
+
+/* ================= Targets ================= */
+function boardTex(o) {
+  return ctex(512, 512, (g, w) => {
+    const c = w / 2; const rings = ['#111827', '#f8fafc'];
+    for (let i = 8; i >= 1; i--) { g.beginPath(); g.arc(c, c, c * i / 8 - 2, 0, Math.PI * 2); g.fillStyle = i === 8 ? o.color : rings[i % 2]; g.fill(); }
+    g.beginPath(); g.arc(c, c, c * 0.52, 0, Math.PI * 2); g.fillStyle = '#ffffff'; g.fill(); g.lineWidth = 10; g.strokeStyle = o.color; g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#0f172a';
+    if (o.emoji) { g.font = `${o.label ? 120 : 170}px ${FONT}`; g.fillText(o.emoji, c, o.label ? c - 38 : c + 6); }
+    if (o.label) { fitText(g, o.label, c * 0.95, 54); g.fillText(o.label, c, o.emoji ? c + 74 : c + 4); }
+  });
+}
+function makeBoard(o) {
+  const g = new THREE.Group(); const r = o.r || 0.42;
+  const face = new THREE.Mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshStandardMaterial({ map: boardTex(o), roughness: .55 }));
+  face.position.z = 0.031; g.add(face);
+  const rim = mesh(new THREE.CylinderGeometry(r + 0.04, r + 0.04, 0.06, 48), M('#334155', { metalness: .5, roughness: .4 }), 0, 0, 0, g); rim.rotation.x = Math.PI / 2;
+  if (o.plate) {
+    const pw = r * 2.5, ph = r * 0.62;
+    const pl = plane(pw, ph, signTex([o.plate], o.color, '#ffffff', 512, Math.round(512 * ph / pw), { r: 40 }), 0, -r - ph / 2 - 0.06, 0.035, g);
+    pl.userData.hitFace = true;
+  }
+  face.userData.hitFace = true; g.userData.face = face; g.userData.r = r; g.userData.color = o.color;
+  return g;
+}
+function balloonGeo() {
+  const pts = [];
+  for (let i = 0; i <= 24; i++) { const t = i / 24; const a = t * Math.PI; const r = Math.sin(a) * (0.75 + 0.25 * t) * 0.32; pts.push(new THREE.Vector2(Math.max(r, 0.001), -Math.cos(a) * 0.4)); }
+  return new THREE.LatheGeometry(pts, 32);
+}
+const BALLOON_GEO = balloonGeo();
+const balloonTexCache = {};
+function makeBalloon(color, emoji, name) {
+  const g = new THREE.Group(); const key = color + emoji + name;
+  const tex = balloonTexCache[key] || (balloonTexCache[key] = ctex(512, 256, (c, w, h) => {
+    c.fillStyle = color; c.fillRect(0, 0, w, h);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `110px ${FONT}`; c.fillText(emoji, w * 0.25, h * 0.45);
+    c.fillStyle = '#fff'; fitText(c, name, w * 0.42, 44); c.lineWidth = 6; c.strokeStyle = 'rgba(0,0,0,.35)';
+    c.strokeText(name, w * 0.25, h * 0.78); c.fillText(name, w * 0.25, h * 0.78);
+    c.font = `110px ${FONT}`; c.fillText(emoji, w * 0.75, h * 0.45);
+  }));
+  tex.userData = { keep: true };
+  const mat = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: tex, roughness: 0.22, clearcoat: 0.8, clearcoatRoughness: 0.2 });
+  const b = new THREE.Mesh(BALLOON_GEO, mat); b.castShadow = true; b.rotation.y = -Math.PI / 2; g.add(b);
+  const knot = mesh(new THREE.ConeGeometry(0.04, 0.06, 8), new THREE.MeshStandardMaterial({ color }), 0, -0.43, 0, g); knot.rotation.x = Math.PI;
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.45, 0), new THREE.Vector3(0.03, -0.8, 0.02), new THREE.Vector3(-0.02, -1.15, 0)]), new THREE.LineBasicMaterial({ color: '#e5e7eb' })));
+  b.userData.hitFace = true; g.userData.face = b; g.userData.r = 0.33; g.userData.color = color;
+  return g;
+}
+
+/* ================= Cosmetics, power-ups, difficulty ================= */
+const POWER = {
+  hint:   { e: '💡', n: 'เฉลย', d: 'กดปุ่ม 💡 ระหว่างเล่น เป้าที่ถูกจะเรืองแสง (หักเฉพาะตอนใช้ · สูงสุด 3 ครั้ง/ด่าน)', price: 20, quiz: true },
+  shield: { e: '🛡️', n: 'กันพลาด', d: 'ตอบผิด/ปาโดนเป้าผิด 1 ครั้ง ไม่เสียคะแนน ได้ลองใหม่', price: 35 },
+  steady: { e: '🎯', n: 'มือนิ่ง', d: 'มือแทบไม่ส่ายตลอดด่าน เล็งง่ายมาก', price: 30 },
+  slow:   { e: '🐢', n: 'ชะลอเป้า', d: 'เป้าและลูกโป่งเคลื่อนที่ช้าลงครึ่งหนึ่ง', price: 30 },
+  time:   { e: '⏱️', n: 'เวลาพิเศษ', d: 'ด่านจับเวลา +10 วิ · ด่านตอบคำถามได้โบนัสความเร็วนานขึ้น', price: 25 },
+  x2:     { e: '✨', n: 'คะแนน ×2', d: 'คะแนนบวกทั้งด่านคูณ 2', price: 60 },
+};
+const COSMETIC = [
+  { k: 'dart:blue', n: 'ลูกดอกฟ้าคราม', e: '🔵', price: 0, dart: { fin: '#22d3ee', shaft: '#22d3ee', barrel: '#1f2937' } },
+  { k: 'dart:green', n: 'ลูกดอกมรกต', e: '🟢', price: 80, dart: { fin: '#10b981', shaft: '#34d399', barrel: '#064e3b' } },
+  { k: 'dart:pink', n: 'ลูกดอกซากุระ', e: '🌸', price: 80, dart: { fin: '#f9a8d4', shaft: '#ec4899', barrel: '#831843' } },
+  { k: 'dart:gold', n: 'ลูกดอกทองคำ', e: '🏆', price: 180, dart: { fin: '#fbbf24', shaft: '#f59e0b', barrel: '#d4a017', metal: true } },
+  { k: 'dart:rainbow', n: 'ลูกดอกสายรุ้ง', e: '🌈', price: 260, dart: { fins: ['#ef4444', '#22c55e', '#3b82f6'], shaft: '#a855f7', barrel: '#111827' } },
+  { k: 'fx:spark', n: 'ประกายดาว', e: '⭐', price: 0, d: 'เอฟเฟกต์เมื่อปาโดน' },
+  { k: 'fx:soap', n: 'ฟองสบู่', e: '🫧', price: 80, d: 'ฟองสบู่ลอยฟุ้ง สะอาดสดใส' },
+  { k: 'fx:confetti', n: 'กระดาษสี', e: '🎊', price: 100, d: 'กระดาษสีปลิวว่อน' },
+  { k: 'fx:heart', n: 'หัวใจ', e: '💖', price: 100, d: 'หัวใจลอยขึ้น' },
+  { k: 'fx:firework', n: 'พลุ', e: '🎆', price: 160, d: 'พลุแตกกระจายพร้อมเสียง' },
+  { k: 'trail:none', n: 'ไม่มีหาง', e: '➖', price: 0, d: 'หางลูกดอกขณะบิน' },
+  { k: 'trail:spark', n: 'หางประกายทอง', e: '✨', price: 90, d: 'ลากประกายทองตามลูกดอก' },
+  { k: 'trail:rainbow', n: 'หางสายรุ้ง', e: '🌈', price: 160, d: 'ลากแสงสายรุ้งตามลูกดอก' },
+  { k: 'trail:bubble', n: 'หางฟองสบู่', e: '🫧', price: 120, d: 'ฟองสบู่ตามทางบิน' },
+];
+const COS = Object.fromEntries(COSMETIC.map(c => [c.k, c]));
+const DIFF = [
+  { k: 'easy', n: 'ง่าย', e: '🟢', sway: .5, speed: .7, time: 1.25, pen: .5, coin: .8 },
+  { k: 'normal', n: 'ปกติ', e: '🟡', sway: 1, speed: 1, time: 1, pen: 1, coin: 1 },
+  { k: 'hard', n: 'ยาก', e: '🔴', sway: 1.6, speed: 1.45, time: .8, pen: 1.5, coin: 1.6 },
+];
+
+/* ================= Dart ================= */
+function makeDart(skinKey) {
+  const sk = (COS[skinKey] || COS['dart:blue']).dart;
+  const g = new THREE.Group(); // points toward -Z
+  const steel = M('#e5e7eb', { metalness: .9, roughness: .2 });
+  const tip = mesh(new THREE.ConeGeometry(0.012, 0.09, 10), steel, 0, 0, -0.2, g); tip.rotation.x = -Math.PI / 2;
+  const barrel = mesh(new THREE.CylinderGeometry(0.022, 0.018, 0.13, 14), M(sk.barrel, { metalness: sk.metal ? 1 : .7, roughness: sk.metal ? .15 : .3 }), 0, 0, -0.1, g); barrel.rotation.x = Math.PI / 2;
+  const grip = mesh(new THREE.CylinderGeometry(0.0235, 0.0235, 0.05, 14), M(sk.metal ? '#fde68a' : '#9ca3af', { metalness: .9, roughness: .4 }), 0, 0, -0.1, g); grip.rotation.x = Math.PI / 2;
+  const shaft = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 8), M(sk.shaft, { roughness: .4 }), 0, 0, 0.03, g); shaft.rotation.x = Math.PI / 2;
+  const fs = new THREE.Shape(); fs.moveTo(0, 0); fs.lineTo(0.055, 0.025); fs.lineTo(0.055, 0.1); fs.lineTo(0, 0.07); fs.closePath();
+  const fg = new THREE.ShapeGeometry(fs);
+  for (let i = 0; i < 3; i++) {
+    const finM = new THREE.MeshStandardMaterial({ color: sk.fins ? sk.fins[i] : sk.fin, side: THREE.DoubleSide, roughness: .5, metalness: sk.metal ? .6 : 0 });
+    const f = new THREE.Mesh(fg, finM); f.rotation.set(Math.PI / 2, 0, 0); f.position.set(0, 0.04, 0);
+    const h = new THREE.Group(); h.add(f); h.rotation.z = i * Math.PI * 2 / 3; h.position.z = 0.03; g.add(h);
+  }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  return g;
+}
+
+/* ================= Hand rig (มือจับลูกดอก) ================= */
+const handBase = new THREE.Group(); camera.add(handBase);
+const handRig = new THREE.Group(); handBase.add(handRig);
+let heldDart = null;
+(function buildHand() {
+  const skin = M('#c98a63', { roughness: .6 });
+  const sleeve = M('#0f766e', { roughness: .9 });
+  const nail = M('#e8bfa6', { roughness: .3 });
+  const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+  function seg(a, b, r, mat, cap) {
+    const A = V(a), B = V(b), len = A.distanceTo(B);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.05, len, 12), mat);
+    m.position.copy(A).add(B).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize()); handRig.add(m);
+    const s = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), cap || mat); s.position.copy(B); handRig.add(s);
+  }
+  function finger(pts, r) { const s0 = new THREE.Mesh(new THREE.SphereGeometry(r * 1.1, 12, 10), skin); s0.position.copy(V(pts[0])); handRig.add(s0); for (let i = 0; i < pts.length - 1; i++) seg(pts[i], pts[i + 1], r * (1 - i * 0.08), skin, i === pts.length - 2 ? nail : null); }
+  const palm = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 16), skin); palm.scale.set(0.032, 0.05, 0.062); palm.position.set(0.046, -0.058, -0.035); palm.rotation.x = 0.25; handRig.add(palm);
+  finger([[0.05, -0.022, -0.082], [0.047, 0.018, -0.104], [0.022, 0.03, -0.112], [0.006, 0.026, -0.108]], 0.0105); // index on top
+  finger([[0.022, -0.085, -0.02], [-0.012, -0.062, -0.058], [-0.026, -0.03, -0.09], [-0.026, -0.006, -0.104]], 0.0125); // thumb
+  finger([[0.056, -0.045, -0.086], [0.05, -0.03, -0.128], [0.026, -0.03, -0.14], [0.012, -0.03, -0.128]], 0.0105); // middle under
+  finger([[0.056, -0.067, -0.08], [0.046, -0.078, -0.112], [0.034, -0.088, -0.098]], 0.0098); // ring curled
+  finger([[0.05, -0.087, -0.07], [0.04, -0.098, -0.09], [0.032, -0.103, -0.078]], 0.0088); // pinky
+  seg([0.06, -0.09, 0.02], [0.13, -0.34, 0.36], 0.042, skin); // wrist→forearm
+  const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.068, 0.42, 16, 1, true), sleeve);
+  const a = V([0.1, -0.24, 0.22]), b = V([0.16, -0.46, 0.55]); sl.position.copy(a).add(b).multiplyScalar(.5); sl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); handRig.add(sl);
+  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.008, 8, 20), M('#14b8a6')); cuff.position.copy(a); cuff.quaternion.copy(sl.quaternion); cuff.rotateX(Math.PI / 2); handRig.add(cuff);
+})();
+window.__handBase = handBase; resize();
+handBase.rotation.set(0.05, -0.1, 0.06);
+function equipHeldDart() {
+  if (heldDart) { handRig.remove(heldDart); disposeTree(heldDart); }
+  heldDart = makeDart(prof() ? prof().eq.dart : 'dart:blue'); heldDart.position.set(0.012, 0.003, 0); handRig.add(heldDart);
+}
+
+/* ================= Particles & effects ================= */
+const SPRT = {};
+function sprTex(kind) {
+  if (SPRT[kind]) return SPRT[kind];
+  const t = ctex(64, 64, (g, w) => {
+    const c = w / 2; g.fillStyle = '#fff'; g.strokeStyle = '#fff';
+    if (kind === 'dot') { const gr = g.createRadialGradient(c, c, 0, c, c, c); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.4, 'rgba(255,255,255,.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); }
+    else if (kind === 'star') { g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 11 : 28, a = i * Math.PI / 5 - Math.PI / 2; g.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r); } g.fill(); }
+    else if (kind === 'heart') { g.beginPath(); g.moveTo(c, 52); g.bezierCurveTo(4, 30, 10, 6, c, 20); g.bezierCurveTo(54, 6, 60, 30, c, 52); g.fill(); }
+    else if (kind === 'bubble') { g.lineWidth = 3; g.beginPath(); g.arc(c, c, 26, 0, 7); g.stroke(); g.fillStyle = 'rgba(255,255,255,.18)'; g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(c - 10, c - 10, 6, 0, 7); g.fill(); }
+  });
+  t.userData = { keep: true }; SPRT[kind] = t; return t;
+}
+const parts = [];
+function spr(kind, color, pos, vel, o) {
+  o = o || {};
+  const m = new THREE.SpriteMaterial({ map: sprTex(kind), color, transparent: true, depthWrite: false, blending: o.add ? THREE.AdditiveBlending : THREE.NormalBlending });
+  const s = new THREE.Sprite(m); s.position.copy(pos); const size = o.size || 0.08; s.scale.setScalar(size); scene.add(s);
+  parts.push({ obj: s, vel, life: o.life || 1, max: o.life || 1, g: o.g == null ? 6 : o.g, size, grow: o.grow || 0, drag: o.drag || 0, rot: o.rot || 0, onEnd: o.onEnd });
+}
+const CONF_GEO = new THREE.PlaneGeometry(0.05, 0.03);
+function confetti(pos, vel, color) {
+  const m = new THREE.Mesh(CONF_GEO, new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true })); m.position.copy(pos); scene.add(m);
+  parts.push({ obj: m, vel, life: 1.8, max: 1.8, g: 2.2, drag: 1.4, spin: new THREE.Vector3(rand(-9, 9), rand(-9, 9), rand(-9, 9)) });
+}
+function updParts(dt) {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.life -= dt; p.vel.y -= p.g * dt; if (p.drag) p.vel.multiplyScalar(Math.max(0, 1 - p.drag * dt));
+    p.obj.position.addScaledVector(p.vel, dt);
+    if (p.spin) { p.obj.rotation.x += p.spin.x * dt; p.obj.rotation.y += p.spin.y * dt; p.obj.rotation.z += p.spin.z * dt; }
+    if (p.obj.isSprite) { if (p.grow) p.obj.scale.setScalar(p.size * (1 + p.grow * (1 - p.life / p.max))); if (p.rot) p.obj.material.rotation += p.rot * dt; }
+    p.obj.material.opacity = clamp(p.life / p.max * 1.4, 0, 1);
+    if (p.life <= 0) { scene.remove(p.obj); p.obj.material.dispose(); parts.splice(i, 1); if (p.onEnd) p.onEnd(p.obj.position.clone()); }
+  }
+}
+const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#6366f1', '#d946ef'];
+const rv = (s, up) => new THREE.Vector3(rand(-1, 1), rand(-0.3, 1) + (up || 0), rand(-1, 1)).multiplyScalar(s);
+function fwBurst(pos, cols, n) {
+  for (let i = 0; i < n; i++) { const d = new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(1.6, 2.4)); spr('dot', pick(cols), pos, d, { add: true, size: 0.09, life: rand(.8, 1.3), g: 1.2, drag: 1.1 }); }
+  SFX.crackle();
+}
+function hitFX(style, pos, color) {
+  const p = pos.clone();
+  switch (style) {
+    case 'soap': for (let i = 0; i < 18; i++) spr('bubble', pick(['#e0f2fe', '#bae6fd', '#f5d0fe', '#ffffff']), p, rv(rand(.6, 1.4), .4), { size: rand(.06, .16), life: rand(1.2, 2), g: -0.5, drag: 1.6, grow: .4 }); break;
+    case 'confetti': for (let i = 0; i < 34; i++) confetti(p, rv(rand(1.5, 3.2), .8), pick(RAINBOW)); break;
+    case 'heart': for (let i = 0; i < 14; i++) spr('heart', pick(['#f43f5e', '#ec4899', '#fb7185', '#f472b6']), p, rv(rand(.6, 1.6), .6), { size: rand(.09, .16), life: rand(1, 1.6), g: -0.6, drag: 1.3 }); break;
+    case 'firework': fwBurst(p, [color || '#fde68a', '#ffffff', pick(RAINBOW)], 46); setTimeout(() => fwBurst(p.clone().add(new THREE.Vector3(rand(-.3, .3), rand(.1, .4), 0)), [pick(RAINBOW), pick(RAINBOW)], 30), 180); break;
+    default: for (let i = 0; i < 16; i++) spr('star', pick(['#fde68a', '#ffffff', color || '#fde68a']), p, rv(rand(1.2, 2.6), .6), { add: true, size: rand(.06, .12), life: rand(.6, 1), g: 4, rot: rand(-6, 6) });
+      for (let i = 0; i < 14; i++) spr('dot', color || '#fff', p, rv(rand(1, 3)), { add: true, size: .06, life: .7 });
+  }
+}
+function missFX(pos) { for (let i = 0; i < 8; i++) spr('dot', '#9ca3af', pos, rv(rand(.4, 1)), { size: .05, life: .5, g: 3 }); }
+function celebrate(n) {
+  let k = 0; const fire = () => {
+    if (k++ >= n) return; const x = rand(-2.2, 2.2), from = new THREE.Vector3(x, 0.2, camBase.look.z - 1);
+    SFX.launch();
+    spr('dot', '#fde68a', from, new THREE.Vector3(rand(-.4, .4), rand(5.2, 6.4), 0), { add: true, size: .1, life: .55, g: 5, onEnd: pos => fwBurst(pos, [pick(RAINBOW), pick(RAINBOW), '#ffffff'], 60) });
+    setTimeout(fire, rand(220, 420));
+  }; fire();
+}
+function trailFX(style, pos) {
+  if (style === 'spark') spr('star', pick(['#fde68a', '#fbbf24', '#fff']), pos, rv(.15), { add: true, size: .05, life: .45, g: .5, rot: 5 });
+  else if (style === 'rainbow') spr('dot', RAINBOW[Math.floor(performance.now() / 40) % RAINBOW.length], pos, rv(.05), { add: true, size: .085, life: .5, g: 0 });
+  else if (style === 'bubble') { if (Math.random() < .5) spr('bubble', '#e0f2fe', pos, rv(.2, .5), { size: rand(.03, .06), life: .8, g: -0.4 }); }
+}
+
+/* ================= Audio ================= */
+let AC = null;
+function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, d, type, vol, f2, delay) {
+  const a = AC; if (!a) return; const t = a.currentTime + (delay || 0);
+  const o = a.createOscillator(), g = a.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(vol || 0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + 0.02);
+}
+function noise(d, vol, hp, delay) {
+  const a = AC; if (!a) return; const len = Math.floor(a.sampleRate * d); const buf = a.createBuffer(1, len, a.sampleRate); const ch = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const s = a.createBufferSource(); s.buffer = buf; const f = a.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp || 800;
+  const g = a.createGain(); g.gain.value = vol || 0.3; s.connect(f).connect(g).connect(a.destination); s.start(a.currentTime + (delay || 0));
+}
+const SFX = {
+  whoosh() { noise(0.2, 0.14, 1600); },
+  thunk() { tone(140, 0.12, 'triangle', 0.35, 70); noise(0.05, 0.15, 300); },
+  pop() { noise(0.12, 0.45, 900); tone(600, 0.08, 'square', 0.08, 200); },
+  ok() { tone(660, 0.12, 'sine', 0.22); tone(880, 0.18, 'sine', 0.22, null, 0.1); tone(1320, 0.22, 'sine', 0.16, null, 0.2); },
+  bad() { tone(220, 0.25, 'sawtooth', 0.12, 140); },
+  coin() { tone(988, 0.08, 'square', 0.08); tone(1319, 0.2, 'square', 0.08, null, 0.08); },
+  crackle() { for (let i = 0; i < 6; i++) noise(0.04, 0.12, 2500, 0.05 + i * rand(0.03, 0.08)); noise(0.3, 0.2, 200); },
+  launch() { tone(300, 0.5, 'sine', 0.05, 1200); noise(0.4, 0.05, 3000); },
+  end() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, 'triangle', 0.2, null, i * 0.12)); }
+};
+
+/* ================= UI helpers ================= */
+const fx = $('fx');
+const tmpV = new THREE.Vector3();
+function popText(pos, text, cls) {
+  tmpV.copy(pos).project(camera);
+  const d = document.createElement('div'); d.className = 'pop ' + (cls || 'ok'); d.textContent = text;
+  d.style.left = ((tmpV.x + 1) / 2 * innerWidth) + 'px'; d.style.top = ((1 - tmpV.y) / 2 * innerHeight) + 'px';
+  fx.appendChild(d); setTimeout(() => d.remove(), 1350);
+}
+let toastT = 0;
+function toast(html, ms) { const t = $('toast'); t.innerHTML = html; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', ms || 3600); }
+function hideToast() { clearTimeout(toastT); $('toast').style.display = 'none'; }
+function setCard(html) { const c = $('card'); if (!html) { c.style.display = 'none'; return; } c.innerHTML = html; c.style.display = 'block'; }
+function setTask(t) { $('h-task').textContent = t; }
+function vib(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id)); }
+function confirmBox(text) { return new Promise(res => { $('mo-text').innerHTML = text; $('modal').style.display = 'flex'; $('mo-yes').onclick = () => { $('modal').style.display = 'none'; res(true); }; $('mo-no').onclick = () => { $('modal').style.display = 'none'; res(false); }; }); }
+
+/* ================= Profiles & online API ================= */
+const PROF = { all: store.get('profiles', {}), cur: store.get('cur', null) };
+function prof() { return PROF.all[PROF.cur] || null; }
+function saveProf() { store.set('profiles', PROF.all); store.set('cur', PROF.cur); }
+function newProfile(name, unit, pin, id) {
+  const p = { id: id || 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, unit, pin, created: Date.now(), coins: 150,
+    inv: { hint: 3, shield: 1, steady: 1 }, own: { 'dart:blue': 1, 'fx:spark': 1, 'trail:none': 1 }, eq: { dart: 'dart:blue', fx: 'fx:spark', trail: 'trail:none' },
+    best: {}, st: { plays: 0, score: 0, throws: 0, hits: 0, correct: 0, wrong: 0, time: 0, clears: 0 }, hist: [], daily: '', diff: 1 };
+  PROF.all[p.id] = p; PROF.cur = p.id; saveProf(); return p;
+}
+const API = {
+  url() { return (store.get('api', '') || CONFIG.API_URL || '').trim(); },
+  on() { return /^https:\/\/script\.google(usercontent)?\.com\//.test(this.url()); },
+  async call(action, data) {
+    const ctl = window.AbortController ? new AbortController() : null; const to = setTimeout(() => ctl && ctl.abort(), 15000);
+    try { const r = await fetch(this.url(), { method: 'POST', body: JSON.stringify(Object.assign({ action }, data || {})), signal: ctl && ctl.signal }); return await r.json(); }
+    finally { clearTimeout(to); }
+  },
+};
+const totals = p => { let total = 0, stars = 0; Object.values(p.best).forEach(b => { total += b.s || 0; stars += b.st || 0; }); return { total, stars }; };
+function snapshot(p) { return { coins: p.coins, inv: p.inv, own: p.own, eq: p.eq, best: p.best, st: p.st, diff: p.diff }; }
+async function flushQueue() {
+  if (!API.on()) return;
+  const q = store.get('queue', []); if (!q.length) return;
+  const rest = [];
+  for (const item of q) { try { const r = await API.call('submit', item); if (!r || !r.ok) { if (r && r.err === 'auth') continue; rest.push(item); } } catch (e) { rest.push(item); } }
+  store.set('queue', rest); renderSync();
+}
+function renderSync() {
+  const q = store.get('queue', []).length;
+  $('m-sync').textContent = API.on() ? (q ? `⏳ รอส่งคะแนนขึ้นระบบ ${q} รายการ` : '🌐 ออนไลน์: คะแนนบันทึกขึ้นระบบโรงพยาบาลแล้ว') : '💾 โหมดเก็บในเครื่อง (ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์อันดับรวม)';
+}
+
+/* ================= Game state ================= */
+let world = null, backdrop = [], targets = [], mode = null, sceneTick = null;
+let curLevel = 0, score = 0, playing = false, ended = false;
+let R = null; // run state of current level
+const flying = [], stuck = [], falling = [], glows = [];
+
+function addScore(n, pos) {
+  if (n > 0) n = Math.round(n * R.mult); else n = Math.round(n * R.F.pen);
+  score = Math.max(0, score + n); $('h-score').textContent = score;
+  if (pos && n) popText(pos, (n > 0 ? '+' : '') + n, n >= 0 ? 'ok' : 'bad');
+}
+function addTarget(g, data, upd) {
+  world.add(g); const t = { g, face: g.userData.face, alive: true, data: data || {}, upd };
+  g.traverse(o => { if (o.userData.hitFace) o.userData.target = t; });
+  targets.push(t); return t;
+}
+function removeTarget(t) {
+  t.alive = false; if (t.g.parent) t.g.parent.remove(t.g); targets = targets.filter(x => x !== t);
+  for (let i = stuck.length - 1; i >= 0; i--) if (stuck[i].parentT === t) stuck.splice(i, 1);
+}
+function disposeTree(o) {
+  o.traverse(c => {
+    if (c.geometry && c.geometry !== BALLOON_GEO && c.geometry !== CONF_GEO) c.geometry.dispose();
+    if (c.material) (Array.isArray(c.material) ? c.material : [c.material]).forEach(m => { if (m.map && !(m.map.userData && m.map.userData.keep)) m.map.dispose(); m.dispose(); });
+  });
+}
+function glow(t) {
+  clearGlow(); if (!t || !t.alive) return;
+  const r = (t.g.userData.r || 0.4) + 0.08;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + 0.07, 48), new THREE.MeshBasicMaterial({ color: '#fde68a', transparent: true, blending: THREE.AdditiveBlending, toneMapped: false, depthWrite: false }));
+  const host = t.data.board || t.g; ring.position.z = 0.05; host.add(ring); glows.push(ring);
+}
+function clearGlow() { glows.forEach(g => { if (g.parent) g.parent.remove(g); g.geometry.dispose(); g.material.dispose(); }); glows.length = 0; }
+function useShield(pos) {
+  if (R.shield > 0) { R.shield--; renderTools(); popText(pos, '🛡️ กันพลาด!', 'info'); SFX.coin(); toast('🛡️ <b>กันพลาด</b>ทำงาน — ไม่เสียคะแนน ลองใหม่ได้เลย', 2200); return true; }
+  return false;
+}
+function good() { R.correct++; }
+function bad() { R.wrong++; }
+
+/* ================= Scenes ================= */
+function buildWard(G) {
+  scene.background = new THREE.Color('#dbeafe'); scene.fog = new THREE.Fog('#e0ecff', 12, 30);
+  const back = room(G, { w: 12, d: 10, h: 3.6, zBack: -4.5, floor: tileTex('#e7e5e4', '#d6d3d1', 8, '#a8a29e'), wall: '#fef3c7', band: '#fcd34d', ceil: '#fffbeb' });
+  [-3.6, 0, 3.6].forEach((x, i) => { bed(G, x, -3.3, 0, ['#93c5fd', '#a7f3d0', '#fbcfe8'][i]); ivStand(G, x + 0.85, -3.6); });
+  curtain(G, -1.8, -3.0, 2.6, 2.6, '#7dd3fc', Math.PI / 2); curtain(G, 1.8, -3.0, 2.6, 2.6, '#7dd3fc', Math.PI / 2);
+  [-3.6, 0, 3.6].forEach(x => { box(1.3, 0.22, 0.08, M('#f8fafc', { roughness: .3 }), x, 1.75, -4.42, G); [['#16a34a', -0.35], ['#2563eb', -0.12], ['#facc15', 0.12], ['#e5e7eb', .35]].forEach(([c, dx]) => cyl(0.04, 0.04, 0.03, M(c), x + dx, 1.75, -4.37, G, 12).rotation.x = Math.PI / 2); });
+  const sky = skyTex([[0, '#60a5fa'], [0.6, '#bfdbfe'], [1, '#f0f9ff']]);
+  windowPane(G, -5.94, 2.0, -1.5, 2.4, 1.4, sky, Math.PI / 2); windowPane(G, -5.94, 2.0, 1.5, 2.4, 1.4, sky, Math.PI / 2);
+  dispenser(G, 5.93, 1.35, -2.2, -Math.PI / 2); dispenser(G, 5.93, 1.35, 0.6, -Math.PI / 2);
+  poster(G, ['🧴 ล้างมือ 7 ขั้นตอน', 'ทุกครั้งก่อน–หลังสัมผัสผู้ป่วย'], 5.93, 2.2, -0.8, -Math.PI / 2, 1.5, 0.9, '#ecfeff', '#0e7490');
+  poster(G, ['หอผู้ป่วยใน', 'IN-PATIENT WARD'], 0, 3.0, -4.43, 0, 1.8, 0.5, '#0ea5e9', '#ffffff');
+  const cart = new THREE.Group(); cart.position.set(4.6, 0, -1.2); G.add(cart);
+  box(0.6, 0.9, 0.45, M('#e0f2fe', { roughness: .4 }), 0, 0.55, 0, cart); [0.3, 0.6, 0.9].forEach(y => box(0.62, 0.03, 0.47, M('#0284c7'), 0, y, 0, cart));
+  lightsIndoor(G, { sun: '#fff1d6', sunPos: [-8, 6, 0], sunI: 1.4, hemi: 0.85 });
+  return { back, cam: [0, 1.65, 4.3], look: [0, 1.75, -1.5] };
+}
+function buildIso(G) {
+  scene.background = new THREE.Color('#0c1a2e'); scene.fog = new THREE.Fog('#0c1a2e', 10, 26);
+  const back = room(G, { w: 11, d: 10, h: 3.4, zBack: -5.5, floor: tileTex('#5eead4', '#99f6e4', 6, '#14b8a6'), floorRough: .3, wall: '#e0f2fe', band: '#38bdf8', ceil: '#f0f9ff', lightColor: '#e0f2fe' });
+  const glassM = new THREE.MeshPhysicalMaterial({ color: '#bae6fd', transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1 });
+  const frameM = M('#94a3b8', { metalness: .6, roughness: .3 });
+  [-3.8, 3.8].forEach(x => back.push(mesh(new THREE.BoxGeometry(3.4, 3.4, 0.04), glassM, x, 1.7, -2.8, G, false)));
+  box(11, 0.12, 0.14, frameM, 0, 3.34, -2.8, G); box(11, 0.1, 0.14, frameM, 0, 0.05, -2.8, G);
+  [-5.5, -2.1, 2.1, 5.5].forEach(x => box(0.1, 3.4, 0.14, frameM, x, 1.7, -2.8, G));
+  back.push(box(1.8, 2.5, 0.06, new THREE.MeshPhysicalMaterial({ color: '#7dd3fc', transparent: true, opacity: .35, roughness: .1 }), 0, 1.25, -2.8, G));
+  box(2.1, 0.85, 0.06, M('#e2e8f0'), 0, 2.93, -2.8, G);
+  poster(G, ['ห้องแยกโรคความดันลบ', 'NEGATIVE PRESSURE ROOM'], 0, 2.93, -2.75, 0, 1.9, 0.6, '#b91c1c', '#ffffff');
+  const lamp = mesh(new THREE.SphereGeometry(0.09, 16, 12), new THREE.MeshBasicMaterial({ color: '#ef4444', toneMapped: false }), 1.3, 2.93, -2.72, G, false);
+  const rl = new THREE.PointLight('#ef4444', 0.8, 3); rl.position.set(1.3, 2.9, -2.5); G.add(rl);
+  const gt = ctex(256, 256, (g) => { g.fillStyle = '#f8fafc'; g.beginPath(); g.arc(128, 128, 120, 0, 7); g.fill(); g.lineWidth = 8; g.strokeStyle = '#334155'; g.stroke(); g.strokeStyle = '#dc2626'; g.lineWidth = 6; g.beginPath(); g.moveTo(128, 128); g.lineTo(60, 80); g.stroke(); g.fillStyle = '#0f172a'; g.font = `700 34px ${FONT}`; g.textAlign = 'center'; g.fillText('-2.5 Pa', 128, 200); });
+  const gauge = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), new THREE.MeshBasicMaterial({ map: gt })); gauge.position.set(-1.35, 2.93, -2.74); G.add(gauge);
+  bed(G, 0, -4.4, 0, '#c4b5fd'); monitor(G, 1.3, 1.6, -5.4, 0, '#22d3ee'); ivStand(G, -1.0, -4.8);
+  box(0.5, 1.1, 0.45, M('#f1f5f9', { roughness: .3 }), 1.6, 0.6, -4.8, G);
+  const cart = new THREE.Group(); cart.position.set(-4.4, 0, -1.2); G.add(cart);
+  box(0.9, 1.0, 0.55, M('#f8fafc', { roughness: .35 }), 0, 0.55, 0, cart); [0.3, 0.6, 0.9].forEach((y, i) => box(0.8, 0.22, 0.02, M(['#fde68a', '#bbf7d0', '#bfdbfe'][i]), 0, y, 0.285, cart));
+  cyl(0.24, 0.2, 0.6, M('#dc2626', { roughness: .5 }), 4.6, 0.3, -1.4, G); cyl(0.25, 0.25, 0.05, M('#991b1b'), 4.6, 0.62, -1.4, G);
+  dispenser(G, -5.43, 1.35, 0.2, Math.PI / 2); dispenser(G, 5.43, 1.35, 0.2, -Math.PI / 2);
+  poster(G, ['สวม PPE ก่อนเข้า', 'ถอด PPE ก่อนออก'], 5.43, 2.2, -1.0, -Math.PI / 2, 1.4, 0.8, '#fff7ed', '#9a3412');
+  poster(G, ['Airborne Precautions', 'ใส่ N95 ทุกครั้ง'], -5.43, 2.2, -1.2, Math.PI / 2, 1.4, 0.8, '#eff6ff', '#1d4ed8');
+  box(8, 0.05, 0.05, frameM, 0, 3.2, -1.3, G);
+  lightsIndoor(G, { sun: '#e0f2fe', sky: '#e0f2fe', ground: '#0f766e', sunPos: [3, 8, 6], sunI: 1.3, hemi: 0.8 });
+  const bl = new THREE.PointLight('#38bdf8', 0.9, 9); bl.position.set(0, 2.6, -4); G.add(bl);
+  return { back, cam: [0, 1.6, 4.2], look: [0, 1.75, -1.3], tick: (dt, T) => { lamp.material.color.setHSL(0, 1, 0.35 + 0.2 * (Math.sin(T * 3) > 0 ? 1 : 0)); } };
+}
+const WASTE_BINS = [
+  { k: 'inf', n: 'ติดเชื้อ', c: '#dc2626', lid: '#991b1b', e: '☣️' },
+  { k: 'gen', n: 'ทั่วไป', c: '#1f2937', lid: '#111827', e: '🗑️' },
+  { k: 'rec', n: 'รีไซเคิล', c: '#eab308', lid: '#a16207', e: '♻️' },
+  { k: 'haz', n: 'อันตราย', c: '#f97316', lid: '#c2410c', e: '⚠️' },
+];
+function buildWaste(G) {
+  G.add(new THREE.Mesh(new THREE.SphereGeometry(80, 32, 16), new THREE.MeshBasicMaterial({ map: skyTex([[0, '#1e3a8a'], [0.35, '#7c3aed'], [0.55, '#f472b6'], [0.68, '#fb923c'], [0.8, '#fde68a'], [1, '#fef3c7']]), side: THREE.BackSide, fog: false, toneMapped: false })));
+  scene.background = new THREE.Color('#fb923c'); scene.fog = new THREE.Fog('#f9a8d4', 18, 70);
+  mesh(new THREE.SphereGeometry(3, 24, 16), new THREE.MeshBasicMaterial({ color: '#fff7ae', fog: false, toneMapped: false }), 18, 6, -70, G, false);
+  const grass = mesh(new THREE.PlaneGeometry(160, 160), M('#4d7c0f', { roughness: 1 }), 0, -0.01, 0, G); grass.rotation.x = -Math.PI / 2;
+  const pad = mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshStandardMaterial({ map: tileTex('#d6d3d1', '#cbd5e1', 6, '#a8a29e'), roughness: .9 }), 0, 0, -1, G); pad.rotation.x = -Math.PI / 2;
+  const back = [grass, pad];
+  const post = M('#475569', { metalness: .5, roughness: .4 });
+  [[-4.6, -3.2], [4.6, -3.2], [-4.6, 0.2], [4.6, 0.2]].forEach(([x, z]) => box(0.12, 3.1, 0.12, post, x, 1.55, z, G));
+  box(10, 0.12, 4.2, M('#0f766e', { roughness: .6 }), 0, 3.15, -1.5, G).rotation.x = 0.06;
+  back.push(box(9.4, 2.6, 0.15, M('#e7e5e4', { roughness: .95 }), 0, 1.3, -3.25, G));
+  poster(G, ['จุดพักขยะ โรงพยาบาล', 'แยกขยะถูกต้อง ลดการติดเชื้อ'], 0, 2.55, -3.16, 0, 3.6, 0.7, '#0f766e', '#ffffff');
+  const winT = ctex(256, 512, (g, w, h) => { g.fillStyle = '#e2e8f0'; g.fillRect(0, 0, w, h); for (let y = 20; y < h - 20; y += 42) for (let x = 14; x < w - 20; x += 40) { g.fillStyle = Math.random() < 0.55 ? '#fde68a' : '#334155'; g.fillRect(x, y, 26, 26); } });
+  const bm = new THREE.MeshStandardMaterial({ map: winT, emissive: '#ffffff', emissiveMap: winT, emissiveIntensity: 0.35, roughness: .8 });
+  [[-14, -26, 9, 14], [0, -30, 12, 18], [14, -25, 8, 11]].forEach(([x, z, w, h]) => box(w, h, 6, bm, x, h / 2, z, G));
+  const cross = new THREE.Group(); cross.position.set(0, 19.5, -26.9); G.add(cross);
+  const crM = new THREE.MeshBasicMaterial({ color: '#ef4444', toneMapped: false }); box(2.4, 0.7, 0.2, crM, 0, 0, 0, cross, false); box(0.7, 2.4, 0.2, crM, 0, 0, 0, cross, false);
+  [-9, -7.5, 8, 9.5, -11, 11].forEach((x, i) => tree(G, x, -6 - (i % 3) * 3, rand(1.1, 1.6)));
+  [-5.6, 5.6].forEach(x => { box(0.08, 3.6, 0.08, post, x, 1.8, 1.2, G); mesh(new THREE.SphereGeometry(0.16, 12, 8), new THREE.MeshBasicMaterial({ color: '#fef9c3', toneMapped: false }), x, 3.6, 1.2, G, false); const pl = new THREE.PointLight('#fde68a', 0.9, 7); pl.position.set(x, 3.4, 1.2); G.add(pl); });
+  WASTE_BINS.forEach((b, i) => {
+    const x = (i - 1.5) * 2.1;
+    cyl(0.42, 0.34, 1.0, M(b.c, { roughness: .45 }), x, 0.5, -2.1, G); cyl(0.46, 0.46, 0.07, M(b.lid, { roughness: .4 }), x, 1.04, -2.1, G);
+    plane(0.62, 0.3, signTex([b.n], '#ffffff', '#0f172a', 256, 124, { r: 16 }), x, 0.55, -1.66, G).rotation.x = -0.08;
+    box(0.06, 1.3, 0.06, post, x, 1.65, -2.45, G);
+  });
+  G.add(new THREE.HemisphereLight('#fde68a', '#365314', 0.75));
+  const d = new THREE.DirectionalLight('#ffd7a8', 2.0); d.position.set(9, 6, -6); d.castShadow = true; d.shadow.mapSize.set(1024, 1024);
+  Object.assign(d.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 0.5, far: 40 }); d.shadow.bias = -0.0005; G.add(d); G.add(d.target);
+  const fill = new THREE.DirectionalLight('#a5b4fc', 0.5); fill.position.set(-6, 4, 6); G.add(fill);
+  return { back, cam: [0, 1.7, 4.4], look: [0, 1.65, -2.0] };
+}
+function buildICU(G) {
+  scene.background = new THREE.Color('#020617'); scene.fog = new THREE.Fog('#031525', 10, 28);
+  const back = room(G, { w: 12, d: 10, h: 3.5, zBack: -5, floor: tileTex('#1e3a4a', '#234e5f', 5, '#0f2a36'), floorRough: .18, wall: '#cbd5e1', band: '#0d9488', ceil: '#e2e8f0', lightColor: '#ccfbf1' });
+  const city = ctex(1024, 384, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#020617'); gr.addColorStop(1, '#1e1b4b'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .8})`; g.fillRect(Math.random() * w, Math.random() * h * 0.5, 2, 2); }
+    let x = 0; while (x < w) { const bw = rand(40, 110), bh = rand(90, 260); g.fillStyle = '#0b1229'; g.fillRect(x, h - bh, bw, bh);
+      for (let yy = h - bh + 10; yy < h - 8; yy += 16) for (let xx = x + 6; xx < x + bw - 8; xx += 14) if (Math.random() < .35) { g.fillStyle = pick(['#fde68a', '#fca5a5', '#a5f3fc', '#fef3c7']); g.fillRect(xx, yy, 6, 8); }
+      x += bw + rand(2, 12); }
+    g.fillStyle = '#fef9c3'; g.beginPath(); g.arc(w * 0.8, h * 0.2, 26, 0, 7); g.fill();
+  });
+  windowPane(G, 0, 2.05, -4.93, 5.2, 1.9, city, 0);
+  [[-4.2, -2.6, Math.PI / 2], [4.2, -2.6, -Math.PI / 2], [-4.2, 0.6, Math.PI / 2], [4.2, 0.6, -Math.PI / 2]].forEach(([x, z, r], i) => {
+    bed(G, x, z, r, ['#99f6e4', '#c4b5fd', '#fde68a', '#fbcfe8'][i]);
+    monitor(G, x < 0 ? -5.9 : 5.9, 1.8, z, x < 0 ? Math.PI / 2 : -Math.PI / 2, ['#22c55e', '#38bdf8', '#f472b6', '#facc15'][i]);
+    dispenser(G, x < 0 ? -5.92 : 5.92, 1.25, z + 1.1, x < 0 ? Math.PI / 2 : -Math.PI / 2);
+    ivStand(G, x + (x < 0 ? 0.9 : -0.9), z - 0.9);
+  });
+  box(4, 1.05, 0.6, M('#0f766e', { roughness: .4 }), 0, 0.53, -4.2, G); box(4.1, 0.06, 0.7, M('#f8fafc', { roughness: .2 }), 0, 1.08, -4.2, G);
+  monitor(G, -1.0, 1.4, -4.3, 0, '#22d3ee'); monitor(G, 1.0, 1.4, -4.3, 0, '#a78bfa');
+  poster(G, ['ICU', 'INTENSIVE CARE UNIT'], 0, 3.25, -4.93, 0, 2.2, 0.42, '#0d9488', '#ffffff');
+  G.add(new THREE.HemisphereLight('#99f6e4', '#0f172a', 0.55));
+  const d = new THREE.DirectionalLight('#e0f2fe', 0.9); d.position.set(2, 8, 5); d.castShadow = true; d.shadow.mapSize.set(1024, 1024);
+  Object.assign(d.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 30 }); G.add(d); G.add(d.target);
+  [[-3, '#2dd4bf'], [3, '#a78bfa']].forEach(([x, c]) => { const l = new THREE.PointLight(c, 1.1, 10); l.position.set(x, 3.0, -1); G.add(l); });
+  return { back, cam: [0, 1.6, 4.4], look: [0, 1.8, -1.4] };
+}
+function buildSink(G) {
+  scene.background = new THREE.Color('#e0f2fe'); scene.fog = new THREE.Fog('#e0f2fe', 12, 30);
+  const mosaic = ctex(512, 512, (g, w) => { const s = 32; for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) { g.fillStyle = pick(['#e0f2fe', '#bae6fd', '#f0f9ff', '#7dd3fc', '#ffffff', '#ffffff']); g.fillRect(i * s, j * s, s - 2, s - 2); } }, [5, 2]);
+  const back = room(G, { w: 11, d: 9, h: 3.4, zBack: -4.2, floor: tileTex('#f1f5f9', '#e2e8f0', 8, '#94a3b8'), floorRough: .25, wall: '#f8fafc', band: '#38bdf8', ceil: '#ffffff' });
+  plane(11, 2.0, mosaic, 0, 1.25, -4.13, G);
+  box(7.6, 0.12, 0.75, M('#e5e7eb', { roughness: .15, metalness: .1 }), 0, 0.92, -3.7, G);
+  box(7.6, 0.86, 0.7, M('#94a3b8', { roughness: .5 }), 0, 0.45, -3.72, G);
+  const chrome = M('#e5e7eb', { metalness: 1, roughness: .12 });
+  const mirT = ctex(256, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#dbeafe'); gr.addColorStop(.5, '#f8fafc'); gr.addColorStop(1, '#bfdbfe'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 10; g.beginPath(); g.moveTo(40, 220); g.lineTo(120, 40); g.stroke(); g.lineWidth = 4; g.beginPath(); g.moveTo(90, 230); g.lineTo(160, 70); g.stroke(); });
+  [-2.6, 0, 2.6].forEach(x => {
+    const basin = mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.14, 28, 1, true), M('#ffffff', { roughness: .1, side: THREE.DoubleSide }), x, 0.92, -3.6, G);
+    mesh(new THREE.CircleGeometry(0.26, 28), M('#cbd5e1', { roughness: .2 }), x, 0.86, -3.6, G).rotation.x = -Math.PI / 2;
+    cyl(0.025, 0.025, 0.35, chrome, x, 1.12, -3.92, G, 12); const sp = cyl(0.02, 0.02, 0.26, chrome, x, 1.28, -3.8, G, 12); sp.rotation.x = Math.PI / 2;
+    cyl(0.05, 0.05, 0.04, chrome, x + 0.12, 1.0, -3.95, G, 12);
+    const mir = plane(1.3, 0.95, mirT, x, 2.0, -4.1, G, true); mir.material.opacity = .9;
+    box(1.38, 1.03, 0.03, M('#cbd5e1', { metalness: .7, roughness: .3 }), x, 2.0, -4.13, G);
+    dispenser(G, x + 0.85, 1.4, -4.08, 0);
+  });
+  // paper towels + foot-pedal bin
+  box(0.35, 0.45, 0.14, M('#f8fafc', { roughness: .3 }), 4.6, 1.5, -4.1, G); box(0.25, 0.04, 0.02, M('#64748b'), 4.6, 1.3, -4.02, G);
+  cyl(0.2, 0.18, 0.55, M('#e2e8f0', { metalness: .6, roughness: .3 }), 4.6, 0.28, -3.6, G);
+  poster(G, ['ล้างมือ 7 ขั้นตอน', 'ถูให้ทั่ว 40–60 วินาที'], -4.6, 2.1, -4.1, 0, 1.4, 0.9, '#ecfeff', '#0e7490');
+  poster(G, ['จุดล้างมือ', 'HAND WASHING STATION'], 0, 3.05, -4.12, 0, 2.4, 0.45, '#0284c7', '#ffffff');
+  box(8.6, 0.05, 0.05, M('#94a3b8', { metalness: .6, roughness: .3 }), 0, 3.25, -1.1, G);
+  lightsIndoor(G, { sun: '#ffffff', sky: '#f0f9ff', ground: '#93c5fd', sunPos: [4, 8, 6], sunI: 1.25, hemi: 0.95 });
+  return { back, cam: [0, 1.6, 4.0], look: [0, 1.8, -1.1] };
+}
+function buildER(G) {
+  scene.background = new THREE.Color('#111827'); scene.fog = new THREE.Fog('#111827', 12, 30);
+  const back = room(G, { w: 12, d: 10, h: 3.5, zBack: -5, floor: tileTex('#cbd5e1', '#d1d5db', 6, '#9ca3af'), floorRough: .2, wall: '#f8fafc', band: '#dc2626', ceil: '#f1f5f9' });
+  // ambulance bay doors (glass) with night outside & flashing lights
+  const outside = ctex(512, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0f172a'); gr.addColorStop(1, '#334155'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#f8fafc'; g.fillRect(140, 120, 240, 110); g.fillStyle = '#dc2626'; g.fillRect(140, 175, 240, 14); g.fillStyle = '#0f172a'; g.fillRect(150, 130, 70, 40); g.fillStyle = '#ef4444'; g.font = `800 34px ${FONT}`; g.textAlign = 'center'; g.fillText('AMBULANCE', 300, 160); });
+  windowPane(G, 0, 1.4, -4.93, 3.4, 2.6, outside, 0);
+  poster(G, ['ห้องฉุกเฉิน', 'EMERGENCY'], 0, 3.1, -4.92, 0, 2.6, 0.55, '#dc2626', '#ffffff');
+  const red = new THREE.PointLight('#ef4444', 0, 8), blue = new THREE.PointLight('#3b82f6', 0, 8); red.position.set(-1.5, 2.5, -4.4); blue.position.set(1.5, 2.5, -4.4); G.add(red, blue);
+  // triage desk
+  box(3, 1.05, 0.7, M('#e2e8f0', { roughness: .35 }), -3.6, 0.53, -3.4, G); box(3.1, 0.06, 0.8, M('#0ea5e9'), -3.6, 1.08, -3.4, G);
+  poster(G, ['จุดคัดกรอง', 'TRIAGE · ไอ จาม สวมหน้ากาก'], -3.6, 2.1, -4.92, 0, 2.6, 0.7, '#fef3c7', '#92400e');
+  monitor(G, -3.2, 1.35, -3.5, 0, '#22c55e');
+  bed(G, 3.8, -2.6, 0.3, '#fecaca', true); bed(G, -4.7, 0.6, Math.PI / 2, '#bfdbfe', true);
+  // crash cart & wheelchair
+  const cc = new THREE.Group(); cc.position.set(5.2, 0, 0.2); G.add(cc); box(0.6, 1.0, 0.5, M('#dc2626', { roughness: .4 }), 0, 0.55, 0, cc); [0.35, 0.6, 0.85].forEach(y => box(0.62, 0.03, 0.52, M('#7f1d1d'), 0, y, 0, cc));
+  const wc = new THREE.Group(); wc.position.set(2.0, 0, -3.8); wc.rotation.y = -0.5; G.add(wc);
+  [-0.28, 0.28].forEach(x => { const w = mesh(new THREE.TorusGeometry(0.28, 0.025, 8, 24), M('#111827'), x, 0.3, 0, wc); w.rotation.y = Math.PI / 2; });
+  box(0.5, 0.06, 0.45, M('#1e3a8a'), 0, 0.48, 0, wc); box(0.5, 0.45, 0.06, M('#1e3a8a'), 0, 0.72, 0.22, wc);
+  curtain(G, 5.9 - 0.05, -1.2, 3.0, 2.6, '#a7f3d0', Math.PI / 2);
+  dispenser(G, 5.93, 1.35, -3.0, -Math.PI / 2); dispenser(G, -5.93, 1.35, -1.0, Math.PI / 2);
+  poster(G, ['Isolation Precautions', 'Standard · Contact · Droplet · Airborne'], -5.93, 2.2, -2.6, Math.PI / 2, 1.8, 0.8, '#eff6ff', '#1e3a8a');
+  lightsIndoor(G, { sun: '#ffffff', sky: '#f8fafc', ground: '#64748b', sunPos: [3, 8, 6], sunI: 1.3, hemi: 0.8 });
+  return { back, cam: [0, 1.6, 4.4], look: [0, 1.75, -1.4], tick: (dt, T) => { const on = Math.sin(T * 7) > 0; red.intensity = on ? 2.2 : 0; blue.intensity = on ? 0 : 2.2; } };
+}
+
+/* ================= Content ================= */
+const GERMS = [
+  { n: 'MRSA', e: '🦠', c: '#dc2626', f: '<b>MRSA</b> แพร่ทางการสัมผัส → ล้างมือ + Contact Precautions' },
+  { n: 'E. coli', e: '🧫', c: '#16a34a', f: '<b>E. coli (ESBL)</b> พบบ่อยใน CAUTI → ดูแลสายสวนปัสสาวะตาม Bundle' },
+  { n: 'CRE', e: '🦠', c: '#7c3aed', f: '<b>CRE</b> ดื้อยากลุ่ม carbapenem → แยกผู้ป่วย ใช้อุปกรณ์เฉพาะราย' },
+  { n: 'A. baumannii', e: '🧬', c: '#ea580c', f: '<b>A. baumannii</b> อยู่บนพื้นผิวได้นาน → เช็ดทำความสะอาดสิ่งแวดล้อมสม่ำเสมอ' },
+  { n: 'C. auris', e: '🍄', c: '#db2777', f: '<b>C. auris</b> เชื้อราดื้อยา → ทำความสะอาดพื้นผิวด้วยน้ำยาที่ได้ผลต่อเชื้อ' },
+  { n: 'C. diff', e: '💩', c: '#92400e', f: '<b>C. difficile</b> สปอร์ทนแอลกอฮอล์ → ล้างมือด้วยสบู่และน้ำ' },
+];
+const PPE = { hh: { e: '🧴', n: 'ล้างมือ' }, gown: { e: '🥼', n: 'เสื้อกาวน์' }, mask: { e: '😷', n: 'หน้ากาก N95' }, eye: { e: '🥽', n: 'แว่น/Face shield' }, glove: { e: '🧤', n: 'ถุงมือ' } };
+const PPE_PHASES = [
+  { k: 'สวม', seq: ['hh', 'gown', 'mask', 'eye', 'glove'], tip: 'ลำดับสวม: ล้างมือ → เสื้อกาวน์ → หน้ากาก → แว่น/Face shield → ถุงมือ', pre: '🚪 ก่อนเข้าห้องผู้ป่วย', color: '#0ea5e9' },
+  { k: 'ถอด', seq: ['glove', 'eye', 'gown', 'mask', 'hh'], tip: 'ลำดับถอด: ถุงมือ → แว่น/Face shield → เสื้อกาวน์ → หน้ากาก → ล้างมือ (ล้างมือทันทีถ้ามือปนเปื้อนระหว่างถอด)', pre: '🚪 ก่อนออกจากห้อง', color: '#f97316' },
+];
+const HW = { s1: { e: '🤲', n: 'ฝ่ามือถูฝ่ามือ' }, s2: { e: '✋', n: 'ฝ่ามือถูหลังมือ' }, s3: { e: '🙏', n: 'นิ้วประสานถูซอกนิ้ว' }, s4: { e: '🤜', n: 'หลังนิ้วถูฝ่ามือ' }, s5: { e: '👍', n: 'ถูนิ้วหัวแม่มือ' }, s6: { e: '☝️', n: 'ปลายนิ้วถูฝ่ามือ' }, s7: { e: '⌚', n: 'ถูรอบข้อมือ' } };
+const HW_PHASES = [{ k: 'ล้างมือ', seq: ['s1', 's2', 's3', 's4', 's5', 's6', 's7'], tip: '7 ขั้นตอน: ฝ่ามือถูฝ่ามือ → ฝ่ามือถูหลังมือ → นิ้วประสานถูซอกนิ้ว → หลังนิ้วถูฝ่ามือ → ถูนิ้วหัวแม่มือ → ปลายนิ้วถูฝ่ามือ → ถูรอบข้อมือ', pre: '🧼 ล้างมือให้ถูกขั้นตอน', color: '#0284c7' }];
+const WASTE_Q = [
+  ['💉', 'เข็มฉีดยาใช้แล้ว', 'inf', 'ทิ้งลงภาชนะของมีคมก่อน แล้วจัดการแบบขยะติดเชื้อ'],
+  ['🩹', 'ผ้าก๊อซเปื้อนเลือด', 'inf', 'วัสดุที่ปนเปื้อนเลือด/สารคัดหลั่ง = ขยะติดเชื้อ (ถุงแดง)'],
+  ['🧤', 'ถุงมือที่สัมผัสสารคัดหลั่ง', 'inf', 'ปนเปื้อนสารคัดหลั่ง = ขยะติดเชื้อ'],
+  ['🩸', 'สายให้เลือด/ถุงเลือดใช้แล้ว', 'inf', 'ปนเปื้อนเลือด = ขยะติดเชื้อ'],
+  ['😷', 'หน้ากากจากห้องแยกโรค', 'inf', 'ขยะจากห้องแยกโรคติดต่อ = ขยะติดเชื้อ'],
+  ['🍱', 'กล่องข้าวเศษอาหารของญาติ', 'gen', 'ไม่ปนเปื้อนสารคัดหลั่ง = ขยะทั่วไป'],
+  ['🧻', 'กระดาษเช็ดมือหลังล้างมือ', 'gen', 'มือสะอาดแล้ว ไม่ปนเปื้อน = ขยะทั่วไป'],
+  ['🍬', 'ซองขนม/ห่อลูกอม', 'gen', 'ขยะทั่วไป ไม่ต้องใช้ถุงแดง (ลดต้นทุนกำจัด)'],
+  ['🧴', 'ขวดน้ำดื่มพลาสติก', 'rec', 'ขวดพลาสติกสะอาด = รีไซเคิล'],
+  ['📦', 'กล่องกระดาษใส่ยา', 'rec', 'กระดาษ/กล่องสะอาด = รีไซเคิล'],
+  ['🥫', 'กระป๋องเครื่องดื่ม', 'rec', 'กระป๋องอลูมิเนียม = รีไซเคิล'],
+  ['🔋', 'ถ่านไฟฉาย/แบตเตอรี่', 'haz', 'มีโลหะหนัก = ขยะอันตราย'],
+  ['💡', 'หลอดไฟฟลูออเรสเซนต์', 'haz', 'มีไอปรอท = ขยะอันตราย'],
+  ['🌡️', 'ปรอทวัดไข้แตก', 'haz', 'ปรอท = ขยะอันตราย ห้ามทิ้งรวมขยะทั่วไป'],
+  ['🧯', 'กระป๋องสเปรย์', 'haz', 'ภาชนะอัดแรงดัน = ขยะอันตราย'],
+];
+const MOMENTS = [
+  { k: 1, e: '1', s: 'ก่อนสัมผัสผู้ป่วย', p: 'ก่อนสัมผัสผู้ป่วย', c: '#2563eb' },
+  { k: 2, e: '2', s: 'ก่อนทำหัตถการสะอาด/ปราศจากเชื้อ', p: 'ก่อนทำหัตถการ', c: '#16a34a' },
+  { k: 3, e: '3', s: 'หลังสัมผัสสารคัดหลั่ง', p: 'หลังสัมผัสสารคัดหลั่ง', c: '#dc2626' },
+  { k: 4, e: '4', s: 'หลังสัมผัสผู้ป่วย', p: 'หลังสัมผัสผู้ป่วย', c: '#9333ea' },
+  { k: 5, e: '5', s: 'หลังสัมผัสสิ่งแวดล้อมรอบผู้ป่วย', p: 'หลังสัมผัสสิ่งแวดล้อม', c: '#ea580c' },
+];
+const MOMENT_Q = [
+  ['🩺', 'กำลังจะวัดความดันโลหิตผู้ป่วย', 1], ['🛏️', 'กำลังจะช่วยพลิกตะแคงตัวผู้ป่วย', 1], ['🤝', 'กำลังจะจับมือทักทายผู้ป่วย', 1],
+  ['🧷', 'กำลังจะใส่สายสวนปัสสาวะ', 2], ['🩹', 'กำลังจะทำแผลแบบปราศจากเชื้อ', 2], ['💉', 'กำลังจะต่อยาเข้าสาย IV / central line', 2], ['🫁', 'กำลังจะดูดเสมหะผ่านท่อช่วยหายใจ', 2],
+  ['🚽', 'เพิ่งเทปัสสาวะออกจากถุงเสร็จ', 3], ['🩸', 'เพิ่งถอดถุงมือหลังเจาะเลือด', 3], ['🤧', 'เพิ่งเช็ดเสมหะ/น้ำลายให้ผู้ป่วย', 3],
+  ['🌡️', 'เพิ่งวัดสัญญาณชีพเสร็จ', 4], ['🧍', 'เพิ่งช่วยผู้ป่วยลุกนั่งเสร็จ', 4],
+  ['📟', 'เพิ่งกดปิดเสียงเครื่องมอนิเตอร์ข้างเตียง (ไม่ได้จับผู้ป่วย)', 5], ['🍽️', 'เพิ่งเก็บถาดอาหารบนโต๊ะข้างเตียง', 5], ['🛌', 'เพิ่งจัดผ้าห่ม/ราวกั้นเตียง ขณะผู้ป่วยไม่อยู่', 5],
+].map(q => [q[0], q[1], q[2], 'Moment ' + q[2] + ': ' + MOMENTS[q[2] - 1].s]);
+const PREC = [
+  { k: 'std', e: '🧤', label: 'Standard', p: 'Standard (มาตรฐาน)', c: '#64748b' },
+  { k: 'con', e: '✋', label: 'Contact', p: 'Contact (สัมผัส)', c: '#d97706' },
+  { k: 'dro', e: '💧', label: 'Droplet', p: 'Droplet (ฝอยละออง)', c: '#16a34a' },
+  { k: 'air', e: '🌬️', label: 'Airborne', p: 'Airborne (อากาศ)', c: '#2563eb' },
+];
+const PREC_Q = [
+  ['🫁', 'ผู้ป่วยวัณโรคปอดระยะแพร่เชื้อ', 'air', 'Airborne: ห้องแยกความดันลบ + หน้ากาก N95'],
+  ['🔴', 'ผู้ป่วยโรคหัด (Measles)', 'air', 'Airborne: ห้องแยกความดันลบ + N95'],
+  ['🤒', 'ผู้ป่วยโรคสุกใส (Varicella)', 'air', 'Airborne + Contact: แยกห้อง N95 และสวมถุงมือ/เสื้อกาวน์'],
+  ['🤧', 'ผู้ป่วยไข้หวัดใหญ่ (Influenza)', 'dro', 'Droplet: หน้ากากอนามัย และเว้นระยะ ≥1 เมตร'],
+  ['👶', 'เด็กเป็นโรคไอกรน (Pertussis)', 'dro', 'Droplet: หน้ากากอนามัย แยกเตียง/ห้อง'],
+  ['🧠', 'สงสัยไข้กาฬหลังแอ่น (Meningococcal)', 'dro', 'Droplet: จนได้ยาปฏิชีวนะครบ 24 ชม.'],
+  ['😮', 'ผู้ป่วยโรคคางทูม (Mumps)', 'dro', 'Droplet: หน้ากากอนามัย'],
+  ['🦠', 'แผลกดทับติดเชื้อ MRSA', 'con', 'Contact: ถุงมือ + เสื้อกาวน์ อุปกรณ์เฉพาะราย'],
+  ['💩', 'ท้องเสียจาก C. difficile', 'con', 'Contact: และล้างมือด้วยสบู่และน้ำ (แอลกอฮอล์ฆ่าสปอร์ไม่ได้)'],
+  ['🐛', 'ผู้ป่วยโรคหิด (Scabies)', 'con', 'Contact: ถุงมือ + เสื้อกาวน์ จัดการผ้าปูให้ถูกวิธี'],
+  ['🧫', 'พบเชื้อ CRE ในปัสสาวะ', 'con', 'Contact: แยกผู้ป่วย/รวมกลุ่ม อุปกรณ์เฉพาะราย'],
+  ['🩺', 'ผู้ป่วยเบาหวานมาตรวจตามนัด (ไม่มีโรคติดต่อ)', 'std', 'Standard Precautions ใช้กับผู้ป่วยทุกราย'],
+  ['🦴', 'ผู้ป่วยกระดูกหักจากอุบัติเหตุ ไม่มีแผลติดเชื้อ', 'std', 'Standard Precautions: ล้างมือ ใช้ PPE ตามความเสี่ยงสัมผัสเลือด/สารคัดหลั่ง'],
+];
+
+/* ================= Modes ================= */
+// cfg: { lv:1..3, F: difficulty object }
+function WardMode(cfg) {
+  const { lv, F } = cfg; const DUR = Math.round((40 + lv * 5) * F.time) + (R.items.time ? 10 : 0);
+  const cleanP = [0.15, 0.22, 0.3][lv - 1], spd = (1 + (lv - 1) * 0.22) * F.speed, target = [1500, 2200, 3000][lv - 1];
+  let left = DUR, spawnT = 0, combo = 0, popped = 0, wrong = 0; const seen = {};
+  return {
+    start() { setTask('ปาลูกโป่งเชื้อโรคให้แตก!'); setCard(`<div class="small">⏱ เหลือเวลา <b id="tl">${DUR}</b> วิ · คอมโบ <b id="cb">x1</b></div><div id="bar"><i id="bi"></i></div>`); toast('🎈 ปา <b>เชื้อโรค</b> ให้แตก · อย่าปาโดน <b>✋ มือสะอาด</b> สีฟ้า', 3500); },
+    update(dt) {
+      left -= dt; const bi = $('bi'); if (bi) bi.style.transform = `scaleX(${Math.max(0, left / DUR)})`; const tl = $('tl'); if (tl) tl.textContent = Math.ceil(Math.max(0, left));
+      spawnT -= dt;
+      if (spawnT <= 0 && targets.length < 6 + lv) {
+        spawnT = rand(0.55, 1.0) * (left < 15 ? 0.7 : 1) / (1 + (lv - 1) * 0.15);
+        const clean = Math.random() < cleanP; const gm = pick(GERMS.slice(0, 3 + lv));
+        const g = clean ? makeBalloon('#38bdf8', '✋', 'มือสะอาด') : makeBalloon(gm.c, gm.e, gm.n);
+        const z = rand(-2.0, 0.4), xr = Math.min(3.2, halfW(z) - 0.55), x = rand(-xr, xr); g.position.set(x, -0.4, z);
+        const sp = rand(0.45, 0.8) * spd * (left < 15 ? 1.25 : 1), ph = rand(0, 6), zig = lv === 3 ? 0.9 : 0.35;
+        addTarget(g, { clean, gm }, (t, dt, T) => { t.g.position.y += sp * dt; t.g.position.x = x + Math.sin(T * (0.9 + lv * .25) + ph) * Math.min(zig, xr * 0.3); t.g.rotation.z = Math.sin(T * 1.3 + ph) * 0.12; if (t.g.position.y > 4.2) removeTarget(t); });
+      }
+      if (left <= 0) {
+        const lines = [`🎈 ปาเชื้อแตก ${popped} ลูก`, `✋ ปาโดนมือสะอาด ${wrong} ครั้ง`];
+        GERMS.forEach(gm => { if (seen[gm.n]) lines.push('📌 ' + gm.f); });
+        finish({ lines, ratio: Math.min(1, score / (target * (R.mult > 1 ? 2 : 1))) });
+      }
+    },
+    hit(t, p) {
+      SFX.pop(); vib(25); removeTarget(t);
+      if (t.data.clean) {
+        hitFX('spark', p, '#38bdf8');
+        if (useShield(p)) return; combo = 0; wrong++; bad(); addScore(-50, p); popText(p.clone().add(new THREE.Vector3(0, -0.35, 0)), 'มือสะอาด! อย่าปา', 'bad');
+      } else {
+        hitFX(R.fx, p, t.g.userData.color);
+        combo = Math.min(5, combo + 1); popped++; good(); addScore(50 * combo, p);
+        if (!seen[t.data.gm.n]) { seen[t.data.gm.n] = 1; toast('🧠 ' + t.data.gm.f, 3200); }
+      }
+      const cb = $('cb'); if (cb) cb.textContent = 'x' + Math.max(1, combo);
+    },
+    miss() { combo = 0; const cb = $('cb'); if (cb) cb.textContent = 'x1'; },
+  };
+}
+// Ordered sequence (PPE / 7-step handwash)
+function SeqMode(cfg, def) {
+  const { lv, F } = cfg; const phases = lv === 1 ? def.phases.slice(0, 1) : def.phases;
+  let ph = 0, step = 0, mistakes = 0, stepMiss = 0, phaseT = 0, totalT = 0; const lines = []; const keys = Object.keys(def.items); const n = keys.length;
+  function slots() {
+    const P = portrait();
+    if (n === 5) return P ? [[-1.3, 2.35], [0, 2.35], [1.3, 2.35], [-0.65, 1.3], [0.65, 1.3]] : [[-3, 2.25], [-1.5, 1.95], [0, 2.25], [1.5, 1.95], [3, 2.25]];
+    return P ? [[-1.05, 2.75], [0, 2.75], [1.05, 2.75], [-0.55, 1.8], [0.55, 1.8], [-0.55, 0.85], [0.55, 0.85]] : [[-2.55, 2.45], [-0.85, 2.45], [0.85, 2.45], [2.55, 2.45], [-1.7, 1.3], [0, 1.3], [1.7, 1.3]];
+  }
+  const r = () => (n === 7 ? (portrait() ? 0.29 : 0.36) : (portrait() ? 0.36 : 0.4));
+  function layout() {
+    [...targets].forEach(removeTarget); clearGlow();
+    const S = slots(), order = shuffle(keys); const amp = (0.05 + lv * 0.04 + ph * 0.04) * F.speed;
+    order.forEach((k, i) => {
+      const o = def.items[k]; const b = makeBoard({ emoji: o.e, color: phases[ph].color, plate: o.n, r: r() });
+      const top = 3.2, hang = new THREE.Group(); hang.position.set(S[i][0], top, def.z); b.position.set(0, S[i][1] - top, 0); hang.add(b);
+      const str = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1, 0)]), new THREE.LineBasicMaterial({ color: '#cbd5e1' })); hang.add(str);
+      hang.userData.face = b.userData.face; hang.userData.r = b.userData.r;
+      const phs = rand(0, 6), data = { k, done: false, slot: i, board: b };
+      addTarget(hang, data, (t, dt, T) => {
+        const s = slots()[data.slot]; t.g.position.x += (s[0] - t.g.position.x) * Math.min(1, dt * 4); b.position.y += ((s[1] - top) - b.position.y) * Math.min(1, dt * 4);
+        str.scale.y = Math.max(0.01, -b.position.y - b.userData.r - 0.04);
+        t.g.rotation.z = Math.sin(T * 1.6 + phs) * amp; b.rotation.y = Math.sin(T * 0.8 + phs) * 0.25;
+      });
+    });
+    showStep();
+  }
+  function showStep() {
+    const s = phases[ph]; clearGlow();
+    setTask(`${s.k} · ขั้นที่ ${step + 1}/${n}`);
+    setCard(`<div class="small">${s.pre} — ปาเป้าที่ต้อง <b>${s.k}</b> เป็นลำดับถัดไป</div><div class="big">${s.seq.slice(0, step).map(k => def.items[k].e).join(' → ') || '…'} → ❓</div>`);
+  }
+  return {
+    start() { phaseT = 0; layout(); toast(`${def.intro} · ปาผิดเสียคะแนน`, 3000); },
+    update(dt) { phaseT += dt; totalT += dt; },
+    hintTarget() { const k = phases[ph].seq[step]; return targets.find(t => t.data.k === k); },
+    hit(t, p) {
+      const s = phases[ph]; if (t.data.done) { SFX.thunk(); return; }
+      if (t.data.k === s.seq[step]) {
+        SFX.ok(); vib(20); t.data.done = true; hitFX(R.fx, p, s.color); good();
+        addScore(100 + Math.max(0, 60 - Math.floor(phaseT * 2)), p);
+        t.data.board.userData.face.material.color.set('#bbf7d0');
+        step++; stepMiss = 0;
+        if (lv === 3 && step < n) { const rest = targets.filter(x => !x.data.done), sl = shuffle(rest.map(x => x.data.slot)); rest.forEach((x, i) => x.data.slot = sl[i]); popText(p.clone().add(new THREE.Vector3(0, .5, 0)), '🔀 สลับตำแหน่ง!', 'info'); }
+        if (step >= n) {
+          lines.push(`✅ ${s.k}ครบ ${n} ขั้น (${Math.round(phaseT)} วิ)`); lines.push('📌 ' + s.tip);
+          if (ph < phases.length - 1) { ph++; step = 0; phaseT = 0; toast(`🎉 ${s.k}ครบ! ต่อไป <b>${phases[ph].k}</b> — เป้าจะแกว่งแรงขึ้น`, 3200); setTimeout(() => { if (playing) layout(); }, 1300); }
+          else { lines.push(`❌ ปาผิดลำดับ ${mistakes} ครั้ง`); const tot = n * phases.length; setTimeout(() => finish({ lines, ratio: clamp(tot / (tot + mistakes * 1.5) - Math.max(0, totalT - tot * 6) / 200, 0, 1) }), 900); }
+        } else showStep();
+      } else {
+        if (useShield(p)) return;
+        SFX.bad(); vib([30, 40, 30]); mistakes++; stepMiss++; bad(); addScore(-30, p); missFX(p);
+        toast(stepMiss >= 2 ? `❌ ยังไม่ใช่ · 💡 ขั้นนี้คือ <b>${def.items[s.seq[step]].e} ${def.items[s.seq[step]].n}</b><br>${s.tip}` : `❌ ยังไม่ใช่ <b>${def.items[t.data.k].n}</b> · ขั้นนี้ต้อง${s.k}อะไรก่อน? ลองอีกครั้ง`, 3600);
+      }
+    },
+    miss() {},
+  };
+}
+// Question → pick the right board (waste / 5 moments / precautions)
+function QuizMode(cfg, def) {
+  const { lv, F } = cfg; const N = def.n[lv - 1]; const perQ = def.perQ * F.time + (R.items.time ? 4 : 0);
+  let qs, idx = 0, qT = 0, correct = 0, busy = false; const lines = [];
+  function show() {
+    const q = qs[idx]; qT = 0; busy = false; clearGlow(); setTask(`${def.qName} ${idx + 1}/${N}`);
+    setCard(`<span class="em">${q[0]}</span><div class="big">${q[1]}</div><div class="small">${def.ask}</div><div id="bar"><i id="bi"></i></div>`);
+  }
+  function next(delay) {
+    setTimeout(() => {
+      if (!playing) return; idx++;
+      if (idx >= N) { lines.unshift(`✅ ถูก ${correct}/${N} ข้อ`); if (def.sum) lines.push(def.sum); finish({ lines, ratio: correct / N }); return; }
+      if (lv === 3 && def.shuffle && idx % 3 === 0) { const sl = shuffle(targets.map(t => t.data.slot)); targets.forEach((t, i) => t.data.slot = sl[i]); toast('🔀 เป้าสลับตำแหน่ง!', 1500); }
+      show();
+    }, delay);
+  }
+  return {
+    start() {
+      qs = shuffle(def.qs).slice(0, N);
+      def.boards.forEach(b => { if (!qs.some(q => q[2] === b.k)) { const pool = def.qs.filter(q => q[2] === b.k && !qs.includes(q)); if (pool.length) qs[Math.floor(srand() * N)] = pool[Math.floor(srand() * pool.length)]; } });
+      qs = shuffle(qs);
+      def.boards.forEach((b, i) => {
+        const P = portrait(); const g = makeBoard({ emoji: b.e, label: b.label, color: b.c, plate: b.p, r: P ? def.rP : def.r });
+        const data = { k: b.k, slot: i, board: g }; const phs = i * 1.3;
+        const pos0 = def.pos(i, P); g.position.set(pos0[0], pos0[1], pos0[2]);
+        addTarget(g, data, (t, dt, T) => {
+          const s = def.pos(data.slot, portrait()); const A = (portrait() ? 0.45 : 1) * F.speed;
+          const sp = 0.6 + idx * 0.05 * lv; const ax = Math.min(def.moveX[lv - 1] * A, def.maxX * (portrait() ? 0.5 : 1)), ay = def.moveY[lv - 1] * A;
+          t.g.userData.bx = (t.g.userData.bx == null ? s[0] : t.g.userData.bx); t.g.userData.bx += (s[0] - t.g.userData.bx) * Math.min(1, dt * 3);
+          t.g.position.x = t.g.userData.bx + Math.sin(T * sp + phs) * ax; t.g.position.y = s[1] + Math.cos(T * sp * 1.3 + phs) * ay; t.g.position.z = s[2];
+        });
+      });
+      show(); toast(def.intro, 3200);
+    },
+    update(dt) { if (!busy) { qT += dt; const bi = $('bi'); if (bi) bi.style.transform = `scaleX(${Math.max(0, 1 - qT / perQ)})`; } },
+    hintTarget() { if (busy || !qs) return null; return targets.find(t => t.data.k === qs[idx][2]); },
+    hit(t, p) {
+      if (busy) { SFX.thunk(); return; } const q = qs[idx]; const right = def.boards.find(b => b.k === q[2]);
+      if (t.data.k === q[2]) { busy = true; correct++; good(); SFX.ok(); vib(20); hitFX(R.fx, p, right.c); addScore(100 + Math.max(0, Math.round((perQ - qT) * 10)), p); toast(`✅ <b>${q[1]}</b> → ${right.e} ${right.p || right.label}<br>${q[3]}`, 2400); next(1300); }
+      else {
+        if (useShield(p)) return;
+        busy = true; bad(); SFX.bad(); vib([30, 40, 30]); missFX(p); addScore(-20, p);
+        toast(`❌ <b>${q[1]}</b> → ที่ถูกคือ ${right.e} <b>${right.p || right.label}</b><br>${q[3]}`, 3200); lines.push(`❌ ${q[0]} ${q[1]} → ${right.p || right.label} · ${q[3]}`); next(2200);
+      }
+    },
+    miss() {},
+  };
+}
+
+/* ================= Scenes & levels ================= */
+const TIERS = [{ n: 'พื้นฐาน', d: 'เป้านิ่ง เนื้อหาหลัก' }, { n: 'ชำนาญ', d: 'เป้าเคลื่อนที่ โจทย์มากขึ้น' }, { n: 'เชี่ยวชาญ', d: 'เป้าสลับตำแหน่ง เร็ว ท้าทาย' }];
+const SCENES = [
+  { id: 'ward', emoji: '🏥', name: 'หอผู้ป่วยใน', sub: 'ปาไล่เชื้อโรค', grad: 'linear-gradient(135deg,#f59e0b,#ea580c)', build: buildWard, mode: cfg => WardMode(cfg),
+    desc: ['ปาลูกโป่งเชื้อดื้อยาให้แตก ระวังลูกโป่ง "มือสะอาด"', 'ลูกโป่งมากขึ้น เร็วขึ้น เชื้อชนิดใหม่', 'ลูกโป่งส่ายซิกแซก มือสะอาดเยอะขึ้น'] },
+  { id: 'iso', emoji: '🧑‍⚕️', name: 'ห้องแยกโรค', sub: 'ลำดับ PPE', grad: 'linear-gradient(135deg,#0ea5e9,#4f46e5)', build: buildIso,
+    mode: cfg => SeqMode(cfg, { items: PPE, phases: PPE_PHASES, z: -1.3, intro: '🧑‍⚕️ ปาเป้าอุปกรณ์ตาม <b>ลำดับที่ถูกต้อง</b>' }),
+    desc: ['ลำดับการสวม PPE ก่อนเข้าห้อง', 'สวม แล้วต่อด้วยลำดับการถอด', 'สวม–ถอด เป้าสลับตำแหน่งทุกครั้งที่ปาถูก'] },
+  { id: 'waste', emoji: '🗑️', name: 'จุดพักขยะ', sub: 'แยกขยะ', grad: 'linear-gradient(135deg,#16a34a,#0d9488)', build: buildWaste,
+    mode: cfg => QuizMode(cfg, { boards: WASTE_BINS.map(b => ({ k: b.k, e: b.e, label: b.n, c: b.c })), qs: WASTE_Q, n: [6, 10, 12], perQ: 8, r: .45, rP: .4, maxX: .5,
+      pos: (i, P) => P ? [i % 2 ? 0.75 : -0.75, i < 2 ? 2.55 : 1.55, -0.6] : [(i - 1.5) * 2.1, 2.45, -2.4], moveX: [0, .08, .25], moveY: [0, .06, .1],
+      qName: 'ชิ้นที่', ask: 'ทิ้งถังไหน? ปาเป้าเหนือถังที่ถูกต้อง', intro: '🗑️ ดูชื่อขยะด้านบน แล้วปาเป้าของ <b>ถังที่ถูกต้อง</b> · ตอบเร็วได้โบนัส' }),
+    desc: ['ขยะ 6 ชิ้น เป้านิ่ง', 'ขยะ 10 ชิ้น เป้าขยับ', 'ขยะ 12 ชิ้น เป้าแกว่งแรง'] },
+  { id: 'icu', emoji: '🫀', name: 'ห้อง ICU', sub: '5 Moments', grad: 'linear-gradient(135deg,#db2777,#7c3aed)', build: buildICU,
+    mode: cfg => QuizMode(cfg, { boards: MOMENTS.map(m => ({ k: m.k, e: m.e, c: m.c, p: m.p })), qs: MOMENT_Q, n: [6, 8, 10], perQ: 10, r: .38, rP: .4, shuffle: true, maxX: .3,
+      pos: (i, P) => P ? [[-1.3, 0, 1.3, -0.7, 0.7][i], i < 3 ? 2.45 : 1.35, -1.4] : [(i - 2) * 1.45, i % 2 ? 1.55 : 2.35, -1.4], moveX: [.08, .3, .5], moveY: [.03, .08, .12],
+      qName: 'สถานการณ์', ask: 'ต้องล้างมือในจังหวะไหน? ปาเป้าหมายเลขที่ถูกต้อง', intro: '🫀 อ่านสถานการณ์ แล้วปาเป้า <b>หมายเลข 5 Moments</b> ที่ถูกต้อง',
+      sum: '📌 5 Moments: ' + MOMENTS.map(x => x.k + ' ' + x.s).join(' · ') }),
+    desc: ['6 สถานการณ์ เป้าขยับเบาๆ', '8 สถานการณ์ เป้าเร็วขึ้น', '10 สถานการณ์ เป้าสลับตำแหน่งทุก 3 ข้อ'] },
+  { id: 'sink', emoji: '🧼', name: 'จุดล้างมือ', sub: 'ล้างมือ 7 ขั้นตอน', grad: 'linear-gradient(135deg,#06b6d4,#2563eb)', build: buildSink,
+    mode: cfg => SeqMode(cfg, { items: HW, phases: HW_PHASES, z: -1.1, intro: '🧼 ปาเป้าท่าล้างมือ <b>ตามลำดับ 7 ขั้นตอน</b>' }),
+    desc: ['เรียง 7 ขั้นตอน เป้าแกว่งเบาๆ', 'เป้าแกว่งแรงขึ้น', 'เป้าสลับตำแหน่งทุกครั้งที่ปาถูก'] },
+  { id: 'er', emoji: '🚑', name: 'ห้องฉุกเฉิน', sub: 'Isolation Precautions', grad: 'linear-gradient(135deg,#dc2626,#9333ea)', build: buildER,
+    mode: cfg => QuizMode(cfg, { boards: PREC.map(b => ({ k: b.k, e: b.e, label: b.label, c: b.c, p: b.p })), qs: PREC_Q, n: [6, 8, 10], perQ: 10, r: .42, rP: .4, shuffle: true, maxX: .35,
+      pos: (i, P) => P ? [i % 2 ? 0.75 : -0.75, i < 2 ? 2.5 : 1.4, -1.2] : [(i - 1.5) * 1.8, i % 2 ? 1.6 : 2.35, -1.4], moveX: [.05, .25, .45], moveY: [.03, .08, .12],
+      qName: 'ผู้ป่วยรายที่', ask: 'ใช้ Precautions แบบใด? ปาเป้าที่ถูกต้อง', intro: '🚑 คัดกรองผู้ป่วย แล้วปาเป้า <b>Isolation Precautions</b> ที่เหมาะสม',
+      sum: '📌 Standard Precautions ใช้กับผู้ป่วยทุกราย แล้วเพิ่ม Transmission-based ตามช่องทางแพร่เชื้อ' }),
+    desc: ['6 ราย เป้าขยับเบาๆ', '8 ราย เป้าเร็วขึ้น', '10 ราย เป้าสลับตำแหน่งทุก 3 ราย'] },
+];
+const LEVELS = [];
+for (let lv = 1; lv <= 3; lv++) SCENES.forEach((s, si) => LEVELS.push({ id: s.id + '-' + lv, si, lv, no: LEVELS.length + 1 }));
+const unlocked = i => i === 0 || ((prof().best[LEVELS[i - 1].id] || {}).st || 0) >= 1;
+
+/* ================= Scene lifecycle ================= */
+function clearWorld() {
+  [...flying].forEach(f => scene.remove(f.d)); flying.length = 0;
+  stuck.forEach(s => { if (s.d.parent) s.d.parent.remove(s.d); }); stuck.length = 0;
+  falling.forEach(f => { if (f.d.parent) f.d.parent.remove(f.d); }); falling.length = 0;
+  clearGlow(); targets = []; sceneTick = null;
+  if (world) { scene.remove(world); disposeTree(world); world = null; }
+  parts.forEach(p => { scene.remove(p.obj); p.obj.material.dispose(); }); parts.length = 0; fx.innerHTML = '';
+}
+function buildScene(si) {
+  clearWorld(); world = new THREE.Group(); scene.add(world); world.userData.si = si;
+  const info = SCENES[si].build(world); backdrop = info.back; sceneTick = info.tick || null;
+  camBase.pos.set(...info.cam); camBase.look.set(...info.look);
+  camera.position.copy(camBase.pos); camera.lookAt(camBase.look);
+}
+function startLevel(li, diffIdx, chosen, match) {
+  const L = LEVELS[li], S = SCENES[L.si], p = prof(); hideToast(); curLevel = li;
+  srand = match && match.seed ? mulberry32(match.seed) : Math.random; setupMatch(match, L, diffIdx);
+  buildScene(L.si);
+  const items = {}; (chosen || []).forEach(k => { if (k !== 'hint' && (p.inv[k] || 0) > 0) { p.inv[k]--; items[k] = 1; } });
+  const hintLeft = (chosen || []).includes('hint') ? Math.min(3, p.inv.hint || 0) : 0;
+  saveProf();
+  R = { li, diff: diffIdx, F: DIFF[diffIdx], items, mult: items.x2 ? 2 : 1, steady: !!items.steady, tScale: items.slow ? 0.5 : 1, shield: items.shield ? 1 : 0, hintLeft,
+    fx: p.eq.fx.split(':')[1], trail: p.eq.trail.split(':')[1], throws: 0, hits: 0, correct: 0, wrong: 0, t0: performance.now() };
+  score = 0; $('h-score').textContent = '0'; ended = false; playing = true;
+  $('h-scene').textContent = `ด่าน ${L.no} · ${S.emoji} ${S.name} · ${DIFF[diffIdx].e} ${DIFF[diffIdx].n}` + (MATCH ? (MATCH.type === 'bot' ? ' · 🤖 แข่งบอท' : ' · 👥 ห้อง ' + MATCH.code) : '');
+  $('hud').style.display = 'block'; $('hint').style.display = 'block'; show(null);
+  equipHeldDart();
+  mode = S.mode({ lv: L.lv, F: R.F }); mode.start(); renderTools(); renderRace(); netStatus('play');
+  setTimeout(() => { $('hint').style.display = 'none'; }, 5000);
+}
+function renderTools() {
+  const t = $('tools'); if (!playing || !R) { t.style.display = 'none'; return; }
+  let h = '';
+  if (R.hintLeft > 0 && mode && mode.hintTarget) h += `<button class="tb" id="tb-hint" title="เฉลย">💡<small>${R.hintLeft}</small></button>`;
+  const act = []; if (R.steady) act.push('🎯'); if (R.tScale < 1) act.push('🐢'); if (R.mult > 1) act.push('✨'); if (R.shield) act.push('🛡️'); if (R.items.time) act.push('⏱️');
+  if (act.length) h += `<div class="act glass" title="ไอเทมที่ทำงานอยู่">${act.join('<br>')}</div>`;
+  t.innerHTML = h; t.style.display = h ? 'flex' : 'none';
+  const hb = $('tb-hint'); if (hb) hb.onclick = e => { e.stopPropagation(); useHint(); };
+}
+function useHint() {
+  if (!R || R.hintLeft <= 0 || !mode.hintTarget) return; const t = mode.hintTarget(); if (!t) return;
+  const p = prof(); if ((p.inv.hint || 0) <= 0) return; p.inv.hint--; R.hintLeft--; saveProf(); glow(t); SFX.coin(); renderTools(); toast('💡 เป้าที่ถูกต้องกำลังเรืองแสง!', 1800);
+}
+function finish(r) {
+  if (ended) return; ended = true; playing = false; aiming = false; $('aim').style.display = 'none'; renderTools(); clearGlow();
+  SFX.end(); const L = LEVELS[curLevel], S = SCENES[L.si], p = prof();
+  const stars = r.ratio >= 0.85 ? 3 : r.ratio >= 0.55 ? 2 : r.ratio >= 0.25 ? 1 : 0;
+  const prev = p.best[L.id] || { s: 0, st: 0 }; const first = stars >= 1 && !prev.st; const isBest = score > prev.s;
+  p.best[L.id] = { s: Math.max(prev.s, score), st: Math.max(prev.st, stars), d: Math.max(prev.d || 0, R.diff) };
+  const dur = Math.round((performance.now() - R.t0) / 1000);
+  let coins = Math.round((score / 25 + stars * 15 + (first ? 30 : 0)) * R.F.coin); let bonus = '';
+  if (p.daily !== today()) { p.daily = today(); coins += 30; bonus = '🎁 โบนัสรายวัน +30'; }
+  let drop = null; if (stars === 3) { drop = pick(Object.keys(POWER)); p.inv[drop] = (p.inv[drop] || 0) + 1; }
+  p.coins += coins;
+  Object.assign(p.st, { plays: p.st.plays + 1, score: p.st.score + score, throws: p.st.throws + R.throws, hits: p.st.hits + R.hits, correct: p.st.correct + R.correct, wrong: p.st.wrong + R.wrong, time: p.st.time + dur, clears: p.st.clears + (stars >= 1 ? 1 : 0) });
+  p.hist.unshift({ t: Date.now(), l: L.id, d: R.diff, s: score, st: stars }); p.hist = p.hist.slice(0, 30);
+  saveProf();
+  const tt = totals(p);
+  const play = { id: p.id, pin: p.pin, name: p.name, unit: p.unit, level: L.id, levelName: `ด่าน ${L.no} ${S.name} (${TIERS[L.lv - 1].n})`, diff: DIFF[R.diff].n, score, stars, correct: R.correct, wrong: R.wrong, throws: R.throws, hits: R.hits, dur, total: tt.total, totalStars: tt.stars, plays: p.st.plays, profile: snapshot(p) };
+  if (API.on() && !String(p.id).startsWith('L')) { const q = store.get('queue', []); q.push(play); store.set('queue', q.slice(-50)); flushQueue(); }
+  celebrate(stars >= 3 ? 7 : stars >= 1 ? 4 : 1);
+  const raceHtml = matchFinish(stars);
+  $('res-title').textContent = `ด่าน ${L.no} · ${S.name}`;
+  $('res-stars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  $('res-score').textContent = score;
+  $('res-sub').textContent = (isBest ? '🏆 สถิติใหม่ของคุณ!' : `สถิติสูงสุด ${p.best[L.id].s}`) + ` · ${DIFF[R.diff].e} ${DIFF[R.diff].n}`;
+  const nextOk = curLevel + 1 < LEVELS.length && unlocked(curLevel + 1);
+  $('res-gain').innerHTML = [`🪙 +${coins}`, bonus, drop ? `🎁 ได้ ${POWER[drop].e} ${POWER[drop].n} ฟรี!` : '', first && curLevel + 1 < LEVELS.length ? '🔓 ปลดล็อกด่านใหม่!' : '', R.hits + '/' + R.throws + ' ปาโดน'].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  $('res-lines').innerHTML = raceHtml + r.lines.map(l => `<div>${l}</div>`).join('');
+  $('res-next').style.display = nextOk ? 'block' : 'none';
+  setTimeout(() => { hideToast(); setCard(''); $('hud').style.display = 'none'; show('res'); SFX.coin(); }, 1800);
+}
+
+/* ================= Screens ================= */
+function renderHome() {
+  const p = prof(); leaveMatch(); netStatus('menu'); playing = false; ended = false; aiming = false; $('aim').style.display = 'none'; $('hud').style.display = 'none'; $('hint').style.display = 'none'; hideToast(); renderTools();
+  $('m-av').textContent = (p.name || '?').trim().charAt(0); $('m-name').textContent = p.name; $('m-unit').textContent = p.unit; $('m-coin').textContent = '🪙 ' + p.coins; renderSync();
+  let next = LEVELS.findIndex((L, i) => unlocked(i) && !((p.best[L.id] || {}).st));
+  let h = '';
+  TIERS.forEach((T, ti) => {
+    h += `<div class="tier">บทที่ ${ti + 1} · ${T.n} <span>${T.d}</span></div><div class="lgrid">`;
+    LEVELS.forEach((L, i) => {
+      if (L.lv !== ti + 1) return; const S = SCENES[L.si], b = p.best[L.id] || {}, ok = unlocked(i);
+      h += `<button class="lv${ok ? '' : ' lock'}${i === next ? ' next' : ''}" data-i="${i}" style="background:${S.grad}" ${ok ? '' : 'aria-disabled="true"'}>
+        <div class="st">${b.st ? '★'.repeat(b.st) + '☆'.repeat(3 - b.st) : ''}</div><div class="no">ด่าน ${L.no}</div><div class="em">${S.emoji}</div><div class="t">${S.name}</div><div class="s">${S.sub}${b.s ? ' · ' + b.s : ''}</div></button>`;
+    });
+    h += '</div>';
+  });
+  $('map').innerHTML = h;
+  $('map').querySelectorAll('.lv').forEach(b => b.onclick = () => { audio(); const i = +b.dataset.i; if (!unlocked(i)) { toast('🔒 ผ่านด่านก่อนหน้า (ได้ ★ อย่างน้อย 1 ดวง) เพื่อปลดล็อก', 2200); return; } openPre(i); });
+  show('home'); menuShow(LEVELS[Math.max(0, next)].si);
+}
+let preSel = [], preMode = 'solo', preBots = 1;
+function openPre(i) {
+  const L = LEVELS[i], S = SCENES[L.si], p = prof(); preSel = [];
+  $('p-em').textContent = S.emoji; $('p-title').textContent = `ด่าน ${L.no} · ${S.name}`;
+  $('p-desc').innerHTML = `<b>${esc(S.sub)} · ${TIERS[L.lv - 1].n}</b><br>${esc(S.desc[L.lv - 1])}`;
+  const dsel = () => { $('p-diff').innerHTML = DIFF.map((d, k) => `<button class="${k === p.diff ? 'on' : ''}" data-k="${k}">${d.e} ${d.n}<small>เหรียญ ×${d.coin}</small></button>`).join(''); $('p-diff').querySelectorAll('button').forEach(b => b.onclick = () => { p.diff = +b.dataset.k; saveProf(); dsel(); }); };
+  dsel();
+  const isQuiz = S.id !== 'ward';
+  const isel = () => {
+    $('p-items').innerHTML = Object.entries(POWER).map(([k, o]) => { const have = p.inv[k] || 0, na = o.quiz && !isQuiz; const on = preSel.includes(k);
+      return `<button class="it${on ? ' on' : ''}" data-k="${k}" ${have && !na ? '' : 'disabled'}><span class="e">${o.e}</span><span>${o.n} ×${have}<small>${na ? 'ใช้ในด่านนี้ไม่ได้' : esc(o.d)}</small></span></button>`; }).join('');
+    $('p-items').querySelectorAll('.it').forEach(b => b.onclick = () => { const k = b.dataset.k; if (preSel.includes(k)) preSel = preSel.filter(x => x !== k); else if (preSel.length < 3) preSel.push(k); else toast('เลือกได้สูงสุด 3 อย่าง', 1500); isel(); });
+  };
+  isel();
+  const msel = () => {
+    $('p-mode').innerHTML = [['solo', '👤 คนเดียว', 'ฝึกเล่น'], ['bot', '🤖 แข่งกับบอท', 'ออฟไลน์ได้'], ['friend', '👥 เล่นกับเพื่อน', 'เชิญ / สุ่มจับคู่']].map(([k, n, d]) => `<button class="${k === preMode ? 'on' : ''}" data-k="${k}">${n}<small>${d}</small></button>`).join('');
+    $('p-mode').querySelectorAll('button').forEach(b => b.onclick = () => { preMode = b.dataset.k; msel(); });
+    $('p-bots').style.display = preMode === 'bot' ? 'flex' : 'none';
+    $('p-bots').innerHTML = [1, 2, 3].map(n => `<button class="${n === preBots ? 'on' : ''}" data-n="${n}">บอท ${n} ตัว<small>เก่งตามระดับความยาก</small></button>`).join('');
+    $('p-bots').querySelectorAll('button').forEach(b => b.onclick = () => { preBots = +b.dataset.n; msel(); });
+    $('p-go').textContent = preMode === 'friend' ? '👥 ไปห้องรอ' : preMode === 'bot' ? '🤖 เริ่มแข่งกับบอท' : '▶ เริ่มด่าน';
+  };
+  msel();
+  $('p-go').onclick = () => { audio(); if (preMode === 'friend') openLobby(i, p.diff, preSel); else startLevel(i, p.diff, preSel, preMode === 'bot' ? { type: 'bot', n: preBots } : null); };
+  show('pre'); menuShow(L.si);
+}
+let shopTab = 'power';
+function renderShop() {
+  const p = prof(); $('s-coin').textContent = '🪙 ' + p.coins;
+  const tabs = [['power', '🎒 ไอเทมช่วยเล่น'], ['dart', '🎯 ลูกดอก'], ['fx', '🎆 เอฟเฟกต์ปาโดน'], ['trail', '✨ หางลูกดอก']];
+  $('s-tabs').innerHTML = tabs.map(([k, n]) => `<button class="${k === shopTab ? 'on' : ''}" data-k="${k}">${n}</button>`).join('');
+  $('s-tabs').querySelectorAll('button').forEach(b => b.onclick = () => { shopTab = b.dataset.k; renderShop(); });
+  let h = '';
+  if (shopTab === 'power') h = Object.entries(POWER).map(([k, o]) => `<div class="sc"><div class="e">${o.e}</div><div class="n">${o.n} <span class="note">มีอยู่ ×${p.inv[k] || 0}</span></div><div class="d">${esc(o.d)}</div><button data-buy="${k}" ${p.coins >= o.price ? '' : 'disabled'}>ซื้อ 🪙 ${o.price}</button></div>`).join('');
+  else h = COSMETIC.filter(c => c.k.startsWith(shopTab + ':')).map(c => { const own = p.own[c.k], eq = p.eq[shopTab] === c.k;
+    return `<div class="sc"><div class="e">${c.e}</div><div class="n">${c.n}</div><div class="d">${esc(c.d || 'สกินลูกดอก')}</div>${eq ? '<button class="eq" disabled>✔ ใช้อยู่</button>' : own ? `<button class="own" data-eq="${c.k}">ใช้งาน</button>` : `<button data-cos="${c.k}" ${p.coins >= c.price ? '' : 'disabled'}>ซื้อ 🪙 ${c.price}</button>`}</div>`; }).join('');
+  $('s-grid').innerHTML = h;
+  $('s-grid').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const k = b.dataset.buy, o = POWER[k]; if (p.coins < o.price) return; p.coins -= o.price; p.inv[k] = (p.inv[k] || 0) + 1; saveProf(); SFX.coin(); renderShop(); });
+  $('s-grid').querySelectorAll('[data-cos]').forEach(b => b.onclick = () => { const c = COS[b.dataset.cos]; if (p.coins < c.price) return; p.coins -= c.price; p.own[c.k] = 1; p.eq[shopTab] = c.k; saveProf(); SFX.coin(); previewCos(c.k); renderShop(); });
+  $('s-grid').querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { p.eq[shopTab] = b.dataset.eq; saveProf(); previewCos(b.dataset.eq); renderShop(); });
+  show('shop');
+}
+function previewCos(k) {
+  if (k.startsWith('dart:')) equipHeldDart();
+  else if (k.startsWith('fx:')) hitFX(k.split(':')[1], new THREE.Vector3(0, 2, camBase.look.z + 1.5), '#fde68a');
+}
+let statTab = 'me', boardCache = null;
+async function renderStats() {
+  const p = prof(); const tabs = [['me', '👤 ของฉัน'], ['rank', '🏆 อันดับผู้เล่น'], ['unit', '🏥 หน่วยงาน'], ['set', '⚙️ ตั้งค่า']];
+  $('t-tabs').innerHTML = tabs.map(([k, n]) => `<button class="${k === statTab ? 'on' : ''}" data-k="${k}">${n}</button>`).join('');
+  $('t-tabs').querySelectorAll('button').forEach(b => b.onclick = () => { statTab = b.dataset.k; renderStats(); });
+  show('stats'); const B = $('t-body');
+  if (statTab === 'me') {
+    const tt = totals(p), st = p.st; const acc = st.throws ? Math.round(st.hits / st.throws * 100) : 0, cr = (st.correct + st.wrong) ? Math.round(st.correct / (st.correct + st.wrong) * 100) : 0;
+    const kc = [['🎮', st.plays, 'จำนวนครั้งที่เล่น'], ['🏁', Object.values(p.best).filter(b => b.st).length + '/' + LEVELS.length, 'ด่านที่ผ่าน'], ['⭐', tt.stars + '/' + LEVELS.length * 3, 'ดาวสะสม'], ['🏆', tt.total.toLocaleString(), 'คะแนนรวม (สูงสุดทุกด่าน)'], ['🎯', acc + '%', 'ความแม่นยำการปา'], ['🧠', cr + '%', 'ตอบถูก'], ['🪙', p.coins, 'เหรียญคงเหลือ'], ['⏱️', Math.round(st.time / 60) + ' นาที', 'เวลาเล่นรวม']];
+    B.innerHTML = `<div class="cards">${kc.map(k => `<div class="kc"><b>${k[0]} ${k[1]}</b><span>${k[2]}</span></div>`).join('')}</div>
+      <div class="scroll"><table><thead><tr><th>ด่าน</th><th>ฉาก</th><th>ดาว</th><th class="r">คะแนนสูงสุด</th></tr></thead><tbody>${LEVELS.map(L => { const b = p.best[L.id] || {}, S = SCENES[L.si]; return `<tr><td>${L.no}</td><td>${S.emoji} ${S.name} · ${TIERS[L.lv - 1].n}</td><td style="color:#fde68a">${b.st ? '★'.repeat(b.st) : '-'}</td><td class="r">${b.s || '-'}</td></tr>`; }).join('')}</tbody></table></div>
+      <h3 style="margin:14px 0 4px">ประวัติล่าสุด</h3><div class="scroll"><table><tbody>${p.hist.slice(0, 10).map(h => { const L = LEVELS.find(x => x.id === h.l); return `<tr><td>${new Date(h.t).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</td><td>ด่าน ${L ? L.no : '?'} ${L ? SCENES[L.si].emoji : ''}</td><td>${DIFF[h.d].e}</td><td style="color:#fde68a">${'★'.repeat(h.st) || '-'}</td><td class="r">${h.s}</td></tr>`; }).join('') || '<tr><td>ยังไม่มีประวัติการเล่น</td></tr>'}</tbody></table></div>`;
+  } else if (statTab === 'rank' || statTab === 'unit') {
+    B.innerHTML = '<div class="note">กำลังโหลด…</div>';
+    let data = null, online = false;
+    if (API.on()) { try { const r = await API.call('board', {}); if (r && r.ok) { data = r; online = true; boardCache = r; } } catch (e) {} if (!data && boardCache) { data = boardCache; online = true; } }
+    if (!data) {
+      const players = Object.values(PROF.all).map(x => { const t = totals(x); return { name: x.name, unit: x.unit, total: t.total, stars: t.stars, plays: x.st.plays, acc: x.st.throws ? Math.round(x.st.hits / x.st.throws * 100) : 0, id: x.id }; }).sort((a, b) => b.total - a.total);
+      const um = {}; players.forEach(x => { const u = um[x.unit] || (um[x.unit] = { unit: x.unit, players: 0, plays: 0, total: 0 }); u.players++; u.plays += x.plays; u.total += x.total; });
+      data = { players, units: Object.values(um).sort((a, b) => b.total - a.total), summary: { players: players.length, plays: players.reduce((s, x) => s + x.plays, 0) } };
+    }
+    if (statTab !== 'rank' && statTab !== 'unit') return; // tab changed while loading
+    const head = `<div class="note">${online ? '🌐 อันดับรวมทั้งโรงพยาบาล (ออนไลน์)' : '💾 อันดับผู้เล่นในเครื่องนี้ — ตั้งค่าเซิร์ฟเวอร์ในแท็บ ⚙️ เพื่อดูอันดับรวม'} · ผู้เล่น ${data.summary.players} คน · เล่นทั้งหมด ${data.summary.plays} ครั้ง${data.summary.today != null ? ' · วันนี้ ' + data.summary.today + ' ครั้ง' : ''}</div>`;
+    if (statTab === 'rank') B.innerHTML = head + `<div class="scroll"><table><thead><tr><th>#</th><th>ผู้เล่น</th><th>หน่วยงาน</th><th class="r">⭐</th><th class="r">คะแนนรวม</th><th class="r">เล่น</th></tr></thead><tbody>${data.players.slice(0, 100).map((x, i) => `<tr class="${x.id === p.id || (x.name === p.name && x.unit === p.unit) ? 'meRow' : ''}"><td>${i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</td><td>${esc(x.name)}</td><td>${esc(x.unit)}</td><td class="r">${x.stars}</td><td class="r">${Number(x.total).toLocaleString()}</td><td class="r">${x.plays}</td></tr>`).join('')}</tbody></table></div>`;
+    else B.innerHTML = head + `<div class="scroll"><table><thead><tr><th>#</th><th>หน่วยงาน</th><th class="r">ผู้เล่น</th><th class="r">ครั้งที่เล่น</th><th class="r">คะแนนรวม</th></tr></thead><tbody>${data.units.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.unit)}</td><td class="r">${u.players}</td><td class="r">${u.plays}</td><td class="r">${Number(u.total).toLocaleString()}</td></tr>`).join('')}</tbody></table></div>`;
+  } else {
+    B.innerHTML = `<div class="fld"><label for="api-in">URL เซิร์ฟเวอร์อันดับรวม (Google Apps Script Web App)</label><input id="api-in" class="inp" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(store.get('api', '') || CONFIG.API_URL)}"></div>
+      <div class="note">สำหรับผู้ดูแลระบบ: วาง URL จากการ Deploy Apps Script เพื่อให้ทุกเครื่องส่งคะแนนเข้า Google Sheet เดียวกัน</div>
+      <div class="row2"><button class="btn-sub" id="api-save">💾 บันทึก</button><button class="btn-sub" id="api-test">🔌 ทดสอบการเชื่อมต่อ</button></div><div class="err" id="api-msg"></div>`;
+    $('api-save').onclick = () => { store.set('api', $('api-in').value.trim()); $('api-msg').textContent = API.on() ? '✅ บันทึกแล้ว — ผู้เล่นที่ลงทะเบียนใหม่จะถูกบันทึกออนไลน์' : 'บันทึกแล้ว (ยังไม่ใช่ URL ของ Apps Script)'; };
+    $('api-test').onclick = async () => { store.set('api', $('api-in').value.trim()); $('api-msg').textContent = 'กำลังทดสอบ…'; try { const r = await API.call('ping', {}); $('api-msg').textContent = r && r.ok ? '✅ เชื่อมต่อสำเร็จ' : '❌ เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง'; } catch (e) { $('api-msg').textContent = '❌ เชื่อมต่อไม่ได้: ' + e.message; } };
+  }
+}
+function renderReg() {
+  $('r-unit').innerHTML = '<option value="">— เลือกหน่วยงาน —</option>' + CONFIG.UNITS.map(u => `<option>${esc(u)}</option>`).join('');
+  $('r-unit').onchange = () => { $('r-unit2-w').style.display = $('r-unit').value.startsWith('อื่นๆ') ? 'block' : 'none'; };
+  $('r-note').textContent = API.on() ? '🌐 ระบบออนไลน์: ชื่อเดิม + PIN เดิม = เข้าเล่นต่อได้ทุกเครื่อง' : '💾 ข้อมูลเก็บในเครื่องนี้ (PIN ใช้ยืนยันเมื่อเปิดระบบออนไลน์)';
+  const locals = Object.values(PROF.all);
+  $('r-local').innerHTML = locals.length ? `<div class="note" style="margin-top:12px">หรือเลือกผู้เล่นในเครื่องนี้</div><div class="plist">${locals.map(x => `<button data-id="${esc(x.id)}"><span class="av" style="width:32px;height:32px;font-size:16px">${esc(x.name.charAt(0))}</span><span><b>${esc(x.name)}</b><br><span class="note">${esc(x.unit)} · ⭐ ${totals(x).stars}</span></span></button>`).join('')}</div>` : '';
+  $('r-local').querySelectorAll('[data-id]').forEach(b => b.onclick = () => { PROF.cur = b.dataset.id; saveProf(); equipHeldDart(); renderHome(); });
+  ended = false; show('reg'); menuShow(0);
+}
+$('r-go').onclick = async () => {
+  audio();
+  const name = $('r-name').value.trim().replace(/\s+/g, ' '), unit = $('r-unit').value.startsWith('อื่นๆ') ? $('r-unit2').value.trim() : $('r-unit').value, pin = $('r-pin').value.trim();
+  const err = $('r-err'); err.textContent = '';
+  if (name.length < 2) return err.textContent = 'กรุณาใส่ชื่ออย่างน้อย 2 ตัวอักษร';
+  if (!unit) return err.textContent = 'กรุณาเลือกหน่วยงาน';
+  if (!/^\d{4}$/.test(pin)) return err.textContent = 'PIN ต้องเป็นตัวเลข 4 หลัก';
+  const local = Object.values(PROF.all).find(x => x.name === name);
+  if (!API.on()) {
+    if (local) { if (local.pin !== pin) return err.textContent = 'ชื่อนี้มีในเครื่องแล้ว แต่ PIN ไม่ถูกต้อง'; PROF.cur = local.id; saveProf(); }
+    else newProfile(name, unit, pin);
+    equipHeldDart(); renderHome(); return;
+  }
+  $('r-go').disabled = true; err.textContent = 'กำลังเชื่อมต่อ…';
+  try {
+    let r = await API.call('register', { name, unit, pin });
+    if (r && !r.ok && r.err === 'exists') r = await API.call('login', { name, pin });
+    if (!r || !r.ok) { err.textContent = r && r.err === 'pin' ? 'ชื่อนี้ลงทะเบียนแล้ว แต่ PIN ไม่ถูกต้อง' : 'ลงทะเบียนไม่สำเร็จ: ' + ((r && r.msg) || 'ลองใหม่'); return; }
+    let p = PROF.all[r.id];
+    if (!p) { if (local && local.id.startsWith('L')) { delete PROF.all[local.id]; p = Object.assign(local, { id: r.id }); PROF.all[r.id] = p; } else p = newProfile(name, r.unit || unit, pin, r.id); }
+    p.pin = pin; p.unit = r.unit || unit; PROF.cur = p.id;
+    if (r.profile && r.profile.st && (r.profile.st.plays || 0) > (p.st.plays || 0)) Object.assign(p, r.profile);
+    saveProf(); equipHeldDart(); err.textContent = ''; renderHome(); flushQueue(); hello();
+    const pr = store.get('pendingRoom', ''); if (pr) { store.set('pendingRoom', ''); joinByCode(pr); }
+  } catch (e) { err.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (' + e.message + ') — ลองใหม่ หรือเล่นแบบออฟไลน์ได้เมื่อปิดการตั้งค่าเซิร์ฟเวอร์'; }
+  finally { $('r-go').disabled = false; }
+};
+$('go-shop').onclick = () => renderShop();
+$('go-stats').onclick = () => renderStats();
+$('m-online').onclick = () => openLobby(Math.max(0, LEVELS.findIndex((L, i) => unlocked(i) && !((prof().best[L.id] || {}).st))), prof().diff, []);
+$('l-back').onclick = () => { if (NET.room) roomLeave(); renderHome(); };
+$('go-player').onclick = async () => { if (await confirmBox('เปลี่ยนผู้เล่น / ลงทะเบียนผู้เล่นใหม่?<br><span class="note">ข้อมูลของคุณยังเก็บไว้ในเครื่อง</span>')) renderReg(); };
+$('s-back').onclick = () => renderHome(); $('t-back').onclick = () => renderHome(); $('p-back').onclick = () => renderHome();
+$('home-btn').onclick = async () => { if (!playing) return; const was = playing; playing = false; if (await confirmBox('ออกจากด่านนี้? คะแนนรอบนี้จะไม่ถูกบันทึก' + (MATCH && MATCH.type === 'room' ? '<br>และจะออกจากห้องแข่ง' : ''))) { clearWorld(); renderHome(); } else playing = was; };
+$('res-again').onclick = () => { leaveMatch(); openPre(curLevel); };
+$('res-next').onclick = () => { leaveMatch(); openPre(curLevel + 1); };
+$('res-menu').onclick = () => renderHome();
+let showcaseT = 0, showcaseSi = 0;
+function menuShow(si) { if (!world || world.userData.si !== si || targets.length) buildScene(si); showcaseSi = si; showcaseT = 0; }
+
+
+/* ================= Match: bots · rooms · online presence ================= */
+let MATCH = null;
+const NET = { online: { count: 0, players: [] }, room: null, offset: 0, poll: 0, started: false, status: 'menu', lob: null };
+const BOT_NAMES = ['🤖 บอทพยาบาลไว', '🤖 บอทหมอแม่น', '🤖 บอทนักล่าเชื้อ'];
+const BOT_PACE = { ward: 1.0, iso: 2.8, waste: 3.0, icu: 3.4, sink: 2.4, er: 3.4 };
+const onlineMe = () => API.on() && prof() && !String(prof().id).startsWith('L');
+const auth = () => ({ id: prof().id, pin: prof().pin });
+function setupMatch(m, L, diffIdx) {
+  if (!m) { MATCH = null; return; }
+  if (m.type === 'bot') {
+    const S = SCENES[L.si], acc = [0.62, 0.76, 0.9][diffIdx] - (L.lv - 1) * 0.03;
+    MATCH = { type: 'bot', list: Array.from({ length: m.n }, (_, k) => ({ name: BOT_NAMES[k], s: 0, acc: acc - k * 0.04, pace: BOT_PACE[S.id] * rand(0.9, 1.15), t: rand(1.5, 3), ward: S.id === 'ward' })) };
+  } else MATCH = { type: 'room', code: m.code, room: m.room, pushT: 0, done: false, paid: false };
+}
+function updMatch(dt) {
+  if (MATCH.type === 'bot') {
+    let ch = false;
+    MATCH.list.forEach(b => {
+      b.t -= dt; if (b.t > 0) return; b.t = b.pace * rand(0.7, 1.3); ch = true;
+      if (Math.random() < b.acc) b.s += b.ward ? Math.round(50 * Math.min(5, 1 + Math.floor(rand(0, 4)))) : Math.round(rand(100, 170)); else b.s = Math.max(0, b.s - (b.ward ? 50 : 20));
+    });
+    MATCH.rt = (MATCH.rt || 0) - dt; if (ch || MATCH.rt <= 0) { MATCH.rt = 0.5; renderRace(); }
+  } else if (MATCH.type === 'room') {
+    MATCH.pushT -= dt; if (MATCH.pushT <= 0) { MATCH.pushT = 3; roomScore(false); }
+  }
+}
+function raceRows() {
+  const me = { name: prof().name + ' (คุณ)', s: score, me: true, done: ended };
+  if (!MATCH) return [me];
+  if (MATCH.type === 'bot') return [me].concat(MATCH.list.map(b => ({ name: b.name, s: b.s, done: ended }))).sort((a, b) => b.s - a.s);
+  const room = MATCH.room; if (!room) return [me];
+  return Object.keys(room.players).map(k => k === prof().id ? Object.assign(me, { done: room.players[k].done || ended }) : { name: room.players[k].n, s: room.players[k].s, done: room.players[k].done, unit: room.players[k].u }).sort((a, b) => b.s - a.s);
+}
+function renderRace() {
+  const el = $('race'); if (!MATCH || !playing) { el.style.display = 'none'; return; }
+  el.innerHTML = '<div class="note" style="margin-bottom:2px">🏁 ' + (MATCH.type === 'bot' ? 'แข่งกับบอท' : 'ห้อง ' + esc(MATCH.code)) + '</div>' +
+    raceRows().map((r, i) => `<div class="rr${r.me ? ' me' : ''}">${['🥇', '🥈', '🥉'][i] || (i + 1)} <span>${esc(r.name)}</span>${r.done ? ' ✅' : ''}<b>${r.s}</b></div>`).join('');
+  el.style.display = 'block';
+}
+function placeBonus(rows) { const i = rows.findIndex(r => r.me); return rows.length < 2 ? 0 : [50, 25, 10][i] || 0; }
+function raceTable(rows, waiting) {
+  return `<div style="margin-bottom:6px"><b>🏁 ผลการแข่ง${waiting ? ' (รอผู้เล่นอื่นปาให้จบ…)' : ''}</b>${rows.map((r, i) => `<div class="rr" style="display:flex;gap:6px;${r.me ? 'color:#67e8f9;font-weight:800' : ''}">${['🥇', '🥈', '🥉'][i] || (i + 1)} <span>${esc(r.name)}${r.unit ? ' · ' + esc(r.unit) : ''}</span>${r.done ? ' ✅' : ' ⏳'}<b style="margin-left:auto;color:#fde68a">${r.s}</b></div>`).join('')}</div>`;
+}
+function payPlace(rows) {
+  const b = placeBonus(rows); if (!b) return '';
+  const p = prof(); p.coins += b; saveProf(); return `<div>🏆 โบนัสอันดับ ${rows.findIndex(r => r.me) + 1}: 🪙 +${b}</div>`;
+}
+function matchFinish() {
+  $('race').style.display = 'none'; if (!MATCH) return '';
+  if (MATCH.type === 'bot') { const rows = raceRows(); rows.forEach(r => r.done = true); return raceTable(rows) + payPlace(rows); }
+  MATCH.done = true; roomScore(true); resultsPoll(); return `<div id="room-res">${raceTable(raceRows(), true)}</div>`;
+}
+let resPollT = 0;
+function resultsPoll() {
+  clearTimeout(resPollT); let n = 0;
+  const tick = async () => {
+    if (!MATCH || MATCH.type !== 'room' || !$('res').classList.contains('show') && n > 3) return;
+    try { const r = await API.call('room_get', Object.assign(auth(), { code: MATCH.code })); if (r && r.ok) MATCH.room = r.room; } catch (e) {}
+    const done = MATCH.room && MATCH.room.state === 'done'; const rows = raceRows(); const box = $('room-res');
+    let paid = ''; if (done && !MATCH.paid) { MATCH.paid = true; paid = payPlace(rows); }
+    if (box) box.innerHTML = raceTable(rows, !done) + paid;
+    if (!done && n++ < 60) resPollT = setTimeout(tick, 3000);
+  }; resPollT = setTimeout(tick, 1500);
+}
+async function roomScore(done) {
+  if (!MATCH || MATCH.type !== 'room') return;
+  try { const r = await API.call('room_score', Object.assign(auth(), { code: MATCH.code, score, done: !!done })); if (r && r.ok) { MATCH.room = r.room; renderRace(); } } catch (e) {}
+}
+function leaveMatch() {
+  clearTimeout(resPollT); $('race').style.display = 'none';
+  if (MATCH && MATCH.type === 'room' && !MATCH.done && onlineMe()) API.call('room_leave', Object.assign(auth(), { code: MATCH.code })).catch(() => {});
+  MATCH = null;
+}
+function netStatus(s) { NET.status = s; }
+async function hello() {
+  if (!onlineMe()) { $('m-online').style.display = 'none'; return; }
+  try {
+    const r = await API.call('hello', Object.assign(auth(), { status: NET.status }));
+    if (!r || !r.ok) return;
+    NET.online = { count: r.online, players: r.players || [] };
+    $('m-online').style.display = ''; $('m-on-n').textContent = r.online; $('l-on-n').textContent = r.online;
+    (r.invites || []).forEach(showInvite);
+    if ($('lobby').classList.contains('show')) renderLobby();
+  } catch (e) {}
+}
+function showInvite(v) {
+  if (playing) { toast(`📨 <b>${esc(v.from)}</b> ชวนแข่ง (ห้อง ${esc(v.code)}) — จบด่านนี้แล้วกดเข้าห้องได้จากปุ่ม 🟢 ออนไลน์`, 4000); return; }
+  toast(`📨 <b>${esc(v.from)}</b> (${esc(v.unit)}) ชวนคุณแข่งปาเป้า!<br><button id="inv-ok">✅ เข้าร่วม</button><button id="inv-no" style="background:#e5e7eb">ไว้ทีหลัง</button>`, 15000);
+  $('inv-ok').onclick = () => { hideToast(); joinByCode(v.code); }; $('inv-no').onclick = hideToast;
+}
+function openLobby(li, diff, items) {
+  NET.lob = { li, diff, items: items || [] }; netStatus('lobby'); show('lobby'); renderLobby(); hello();
+  menuShow(LEVELS[li].si); clearInterval(NET.poll); NET.poll = setInterval(lobbyPoll, 2500);
+}
+function lobbyText() {
+  const L = LEVELS[NET.room ? NET.room.level : NET.lob.li], S = SCENES[L.si], d = DIFF[NET.room ? NET.room.diff : NET.lob.diff];
+  return `ด่าน ${L.no} · ${S.emoji} ${S.name} (${TIERS[L.lv - 1].n}) · ${d.e} ${d.n}`;
+}
+function renderLobby() {
+  if (!$('lobby').classList.contains('show')) return;
+  const B = $('l-body');
+  if (!onlineMe()) {
+    $('l-level').textContent = lobbyText();
+    B.innerHTML = `<div class="box"><h3>🌐 ต้องเปิดระบบออนไลน์ก่อน</h3><div class="note">การเล่นกับเพื่อน / สุ่มจับคู่ / ดูคนออนไลน์ ต้องตั้งค่าเซิร์ฟเวอร์ (Google Apps Script) และลงทะเบียนแบบออนไลน์<br>ระหว่างนี้แข่งกับบอทได้เลย</div><button class="btn-main" id="l-bot">🤖 แข่งกับบอทแทน</button></div>`;
+    $('l-bot').onclick = () => startLevel(NET.lob.li, NET.lob.diff, NET.lob.items, { type: 'bot', n: 2 }); return;
+  }
+  $('l-level').textContent = lobbyText();
+  const room = NET.room, me = prof().id;
+  const others = NET.online.players.filter(x => x.status !== 'play');
+  const st = { menu: 'หน้าเมนู', lobby: 'ห้องรอ', play: 'กำลังเล่น' };
+  const onlineBox = `<div class="box"><h3>🟢 ออนไลน์ตอนนี้ ${NET.online.count} คน</h3>
+    <div class="row2"><button class="btn-sub" id="l-r1" ${others.length ? '' : 'disabled'}>🎲 สุ่มชวน 1 คน</button><button class="btn-sub" id="l-r3" ${others.length > 1 ? '' : 'disabled'}>🎲 สุ่มชวน 3 คน</button></div>
+    <div class="olist">${NET.online.players.map(x => `<div class="plr"><span class="av" style="width:28px;height:28px;font-size:14px">${esc(x.name.charAt(0))}</span><span class="nm">${esc(x.name)}<br><span class="note">${esc(x.unit)}</span></span><span class="tag">${st[x.status] || x.status}</span>${x.status !== 'play' ? `<button data-inv="${esc(x.id)}">ชวน</button>` : ''}</div>`).join('') || '<div class="note" style="padding:8px 0">ยังไม่มีผู้เล่นคนอื่นออนไลน์ — สร้างห้องแล้วส่งลิงก์ชวนเพื่อนได้เลย</div>'}</div></div>`;
+  let roomBox;
+  if (!room) {
+    roomBox = `<div class="box"><h3>🏁 ห้องแข่ง</h3><div class="note">ทุกคนในห้องเล่นด่านเดียวกัน โจทย์ชุดเดียวกัน แข่งคะแนนแบบสด</div>
+      <button class="btn-main" id="l-create">➕ สร้างห้อง & เชิญเพื่อน</button>
+      <button class="btn-sub" id="l-quick">🎲 สุ่มจับคู่กับผู้เล่นออนไลน์</button>
+      <div class="row2" style="margin-top:8px"><input id="l-code" class="inp" maxlength="4" placeholder="รหัสห้อง 4 ตัว" style="text-transform:uppercase"><button class="btn-sub" id="l-join" style="margin:0">เข้าห้อง</button></div>
+      <div class="err" id="l-err"></div></div>`;
+  } else {
+    const ids = Object.keys(room.players), host = room.host === me;
+    const link = location.origin + location.pathname + '?room=' + room.code;
+    roomBox = `<div class="box"><h3>🏁 ห้อง${room.pub ? 'สาธารณะ' : 'ส่วนตัว'} · ${ids.length}/8 คน</h3><div class="code">${esc(room.code)}</div>
+      <div class="row2"><button class="btn-sub" id="l-copy">📋 คัดลอกลิงก์ชวน</button><a class="btn-sub" style="text-align:center;text-decoration:none;color:#fff;margin-top:8px" target="_blank" rel="noopener" href="https://line.me/R/msg/text/?${encodeURIComponent('มาแข่งปาเป้าพิชิตเชื้อกัน! ห้อง ' + room.code + ' ' + link)}">💬 ส่งทาง LINE</a></div>
+      <div class="note" style="word-break:break-all;margin-top:4px">${esc(link)}</div>
+      ${ids.map(k => `<div class="plr"><span class="av" style="width:28px;height:28px;font-size:14px">${esc(room.players[k].n.charAt(0))}</span><span class="nm">${esc(room.players[k].n)}${k === me ? ' (คุณ)' : ''}<br><span class="note">${esc(room.players[k].u)}</span></span>${k === room.host ? '<span class="tag">👑 เจ้าของห้อง</span>' : ''}</div>`).join('')}
+      ${room.state === 'wait' ? (host ? `<button class="btn-main" id="l-start" ${ids.length >= 2 ? '' : 'disabled'}>▶ เริ่มแข่ง${ids.length < 2 ? ' (รออย่างน้อย 2 คน)' : ''}</button>` : '<div class="note" style="margin-top:8px">⏳ รอเจ้าของห้องกดเริ่ม…</div>') : '<div class="note">🚀 กำลังเริ่ม…</div>'}
+      <button class="btn-sub" id="l-leave">🚪 ออกจากห้อง</button><div class="err" id="l-err"></div></div>`;
+  }
+  B.innerHTML = `<div class="lb">${roomBox}${onlineBox}</div>`;
+  const on = (id, f) => { const e = $(id); if (e) e.onclick = f; };
+  on('l-create', () => roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false }));
+  on('l-quick', () => roomCall('room_quick', { level: NET.lob.li, diff: NET.lob.diff }));
+  on('l-join', () => joinByCode($('l-code').value));
+  on('l-start', () => roomCall('room_start', { code: room.code }));
+  on('l-leave', () => roomLeave());
+  on('l-copy', () => { const link = location.origin + location.pathname + '?room=' + room.code; try { navigator.clipboard.writeText(link).then(() => toast('📋 คัดลอกลิงก์แล้ว ส่งให้เพื่อนได้เลย', 2000), () => toast('คัดลอกไม่ได้ — กดค้างที่ลิงก์ใต้ปุ่มเพื่อคัดลอก', 2500)); } catch (e) { toast('คัดลอกไม่ได้ — กดค้างที่ลิงก์ใต้ปุ่มเพื่อคัดลอก', 2500); } });
+  on('l-r1', () => randomInvite(1)); on('l-r3', () => randomInvite(3));
+  B.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => inviteIds([b.dataset.inv]));
+}
+async function roomCall(action, data) {
+  const err = $('l-err'); if (err) err.textContent = 'กำลังเชื่อมต่อ…';
+  try {
+    const r = await API.call(action, Object.assign(auth(), data));
+    if (!r || !r.ok) { if (err) err.textContent = { nf: 'ไม่พบห้องนี้ (อาจหมดอายุแล้ว)', started: 'ห้องนี้เริ่มแข่งไปแล้ว', full: 'ห้องเต็มแล้ว (8 คน)', host: 'เฉพาะเจ้าของห้องที่กดเริ่มได้', auth: 'ยืนยันตัวตนไม่ผ่าน ลองลงทะเบียนใหม่' }[r && r.err] || 'ทำรายการไม่สำเร็จ'; return null; }
+    if (r.room) setRoom(r.room); else renderLobby(); return r;
+  } catch (e) { if (err) err.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'; return null; }
+}
+function setRoom(room) {
+  NET.room = room; NET.offset = room.now - Date.now();
+  if (NET.lob) { NET.lob.li = room.level; NET.lob.diff = room.diff; }
+  if (room.state === 'play' && !NET.started) beginRoom(room); else renderLobby();
+}
+async function lobbyPoll() {
+  if (!$('lobby').classList.contains('show')) { clearInterval(NET.poll); return; }
+  if (!NET.room) return;
+  try { const r = await API.call('room_get', Object.assign(auth(), { code: NET.room.code })); if (r && r.ok) setRoom(r.room); else if (r && r.err === 'nf') { NET.room = null; renderLobby(); } } catch (e) {}
+}
+function beginRoom(room) {
+  NET.started = true; clearInterval(NET.poll); renderLobby();
+  const wait = Math.max(0, room.startAt - (Date.now() + NET.offset)); const c = $('count'); c.style.display = 'flex';
+  const end = Date.now() + wait;
+  const tick = () => { const left = Math.ceil((end - Date.now()) / 1000); if (left > 0) { c.textContent = left; SFX.coin(); setTimeout(tick, 1000); } else { c.textContent = 'ปา!'; setTimeout(() => c.style.display = 'none', 700);
+    const code = room.code; NET.room = null; NET.started = false; startLevel(room.level, room.diff, NET.lob ? NET.lob.items : [], { type: 'room', code, seed: room.seed, room }); } };
+  tick();
+}
+async function joinByCode(code) {
+  code = String(code || '').trim().toUpperCase(); if (!code) return;
+  if (!onlineMe()) { toast('ต้องลงทะเบียนแบบออนไลน์ก่อนจึงจะเข้าห้องได้', 2500); return; }
+  if (!$('lobby').classList.contains('show')) openLobby(0, prof().diff, []);
+  await roomCall('room_join', { code });
+}
+async function roomLeave() { if (!NET.room) return; const code = NET.room.code; NET.room = null; renderLobby(); try { await API.call('room_leave', Object.assign(auth(), { code })); } catch (e) {} }
+async function inviteIds(ids) {
+  if (!NET.room) { const r = await roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false }); if (!r) return; }
+  let ok = 0; for (const to of ids) { try { const r = await API.call('invite', Object.assign(auth(), { to, code: NET.room.code })); if (r && r.ok) ok++; } catch (e) {} }
+  const names = ids.map(id => (NET.online.players.find(x => x.id === id) || {}).name).filter(Boolean).join(', ');
+  toast(ok ? `📨 ส่งคำชวนถึง <b>${esc(names)}</b> แล้ว รอเพื่อนกดเข้าร่วม` : 'ส่งคำชวนไม่สำเร็จ', 3000);
+}
+function randomInvite(n) {
+  const inRoom = NET.room ? Object.keys(NET.room.players) : [];
+  const pool = shuffle(NET.online.players.filter(x => x.status !== 'play' && !inRoom.includes(x.id)));
+  if (!pool.length) { toast('ตอนนี้ไม่มีผู้เล่นว่างให้สุ่มชวน', 2000); return; }
+  inviteIds(pool.slice(0, n).map(x => x.id));
+}
+
+/* ================= Input & throwing ================= */
+let aiming = false, aimX = 0, aimY = 0, ptrX = 0, ptrY = 0, touchOffset = 0, lastThrow = 0, holdT = 0, aimP = 0;
+let handState = 'idle', throwT = 0, pendingShot = null;
+const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2();
+canvas.addEventListener('pointerdown', e => {
+  if (!playing || handState === 'throw') return; audio(); e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+  aiming = true; holdT = 0; touchOffset = e.pointerType === 'mouse' ? 0 : Math.min(110, innerHeight * 0.12);
+  ptrX = e.clientX; ptrY = e.clientY; $('aim').style.display = 'block'; $('aim').classList.toggle('steady', R.steady); $('hint').style.display = 'none';
+});
+canvas.addEventListener('pointermove', e => { if (aiming) { ptrX = e.clientX; ptrY = e.clientY; } });
+canvas.addEventListener('pointerup', () => { if (!aiming) return; aiming = false; $('aim').style.display = 'none'; if (playing && performance.now() - lastThrow > 300) shoot(aimX, aimY); });
+canvas.addEventListener('pointercancel', () => { aiming = false; $('aim').style.display = 'none'; });
+
+function shoot(sx, sy) {
+  lastThrow = performance.now(); R.throws++;
+  ndc.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const faces = []; targets.forEach(t => t.g.traverse(o => { if (o.userData.hitFace) faces.push(o); }));
+  const hits = ray.intersectObjects(faces.concat(backdrop), false);
+  let end, tgt = null, local = null, wall = false;
+  if (hits.length) { const h = hits[0]; end = h.point.clone(); tgt = h.object.userData.target || null; if (tgt) local = tgt.g.worldToLocal(end.clone()); else wall = true; }
+  else end = ray.ray.at(30, new THREE.Vector3());
+  pendingShot = { end, tgt, local, wall }; handState = 'throw'; throwT = 0;
+}
+function release() {
+  const s = pendingShot; pendingShot = null; SFX.whoosh();
+  const start = new THREE.Vector3(); heldDart.getWorldPosition(start);
+  const d = makeDart(prof().eq.dart); d.position.copy(start); scene.add(d); heldDart.visible = false;
+  const dist = start.distanceTo(s.end);
+  flying.push({ d, start, end: s.end, tgt: s.tgt, local: s.local, wall: s.wall, t: 0, dur: 0.14 + dist * 0.04, arc: Math.min(0.45, dist * 0.055), spin: rand(-1, 1) });
+}
+const _p = new THREE.Vector3(), _q = new THREE.Vector3(), _c = new THREE.Vector3();
+function updFlying(dt) {
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const f = flying[i]; f.t += dt / f.dur;
+    if (f.tgt && f.tgt.alive) f.end.copy(f.tgt.g.localToWorld(f.local.clone()));
+    const k = Math.min(1, f.t);
+    const bez = (t, out) => { _c.copy(f.start).lerp(f.end, 0.5); _c.y += f.arc; const a = 1 - t; return out.set(a * a * f.start.x + 2 * a * t * _c.x + t * t * f.end.x, a * a * f.start.y + 2 * a * t * _c.y + t * t * f.end.y, a * a * f.start.z + 2 * a * t * _c.z + t * t * f.end.z); };
+    bez(k, _p); bez(Math.min(1, k + 0.02), _q);
+    f.d.position.copy(_p); if (_q.distanceToSquared(_p) > 1e-8) { f.d.lookAt(_q); f.d.rotateY(Math.PI); } f.d.rotateZ(f.spin * k * 0.6);
+    if (R && R.trail !== 'none' && k < 1) trailFX(R.trail, _p);
+    if (f.t >= 1) {
+      flying.splice(i, 1);
+      if (f.tgt && f.tgt.alive) {
+        SFX.thunk(); const T = f.tgt; R.hits++;
+        if (mode && mode.hit && playing) mode.hit(T, f.end.clone());
+        if (T.alive) { T.g.attach(f.d); stuck.push({ d: f.d, parentT: T }); } else dropDart(f.d);
+      } else if (f.wall) { SFX.thunk(); world.attach(f.d); stuck.push({ d: f.d }); if (mode && mode.miss) mode.miss(); popText(f.end, 'พลาด', 'info'); missFX(f.end); }
+      else { dropDart(f.d); if (mode && mode.miss) mode.miss(); }
+      while (stuck.length > 12) { const s = stuck.shift(); if (s.d.parent) s.d.parent.remove(s.d); }
+    }
+  }
+}
+function dropDart(d) { if (!d.parent) scene.add(d); falling.push({ d, vy: 0.5, life: 1.2 }); }
+function updFalling(dt) {
+  for (let i = falling.length - 1; i >= 0; i--) { const f = falling[i]; f.vy -= 9 * dt; f.d.position.y += f.vy * dt; f.d.rotation.x += 4 * dt; f.life -= dt; if (f.life <= 0 || f.d.position.y < 0.02) { if (f.d.parent) f.d.parent.remove(f.d); falling.splice(i, 1); } }
+}
+function updHand(dt, T) {
+  handBase.visible = playing || handState === 'throw';
+  if (aiming) aimP = Math.min(1, aimP + dt / 0.28); else if (handState !== 'throw') aimP = Math.max(0, aimP - dt / 0.25);
+  const ax = (aiming || handState === 'throw') ? (aimX / innerWidth - 0.5) : 0, ay = (aiming || handState === 'throw') ? (aimY / innerHeight - 0.5) : 0;
+  const e = aimP * aimP * (3 - 2 * aimP);
+  let py = 0.05 * e + Math.sin(T * 2) * 0.004, pz = 0.13 * e, rx = 0.5 * e, px = -0.03 * e;
+  if (handState === 'throw') {
+    throwT += dt / 0.34; const t = throwT;
+    if (t < 0.38) { const k = t / 0.38, q = k * k; pz = 0.13 * (1 - q) - 0.24 * q; py = 0.05 * (1 - q) + 0.03 * q; rx = 0.5 * (1 - q) - 0.6 * q; px = -0.03 * (1 - q) - 0.04 * q; if (k > 0.6 && pendingShot) release(); }
+    else { const k = (t - 0.38) / 0.62, q = 1 - (1 - k) * (1 - k); pz = -0.24 * (1 - q); py = 0.03 * (1 - q) - 0.06 * Math.sin(k * Math.PI); rx = -0.6 * (1 - q); px = -0.04 * (1 - q); if (pendingShot) release(); }
+    if (t >= 1) { handState = 'idle'; heldDart.visible = true; heldDart.scale.setScalar(0.01); aimP = 0; }
+  }
+  if (heldDart && heldDart.scale.x < 1) heldDart.scale.setScalar(Math.min(1, heldDart.scale.x + dt * 5));
+  handRig.position.set(px, py, pz); handRig.rotation.set(rx - ay * 0.35, -ax * 0.55, -ax * 0.15);
+}
+
+/* ================= Loop ================= */
+const clk = new THREE.Clock(); let T = 0, TT = 0;
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, clk.getDelta()); T += dt;
+  const ts = (R && playing) ? R.tScale : 1; TT += dt * ts;
+  if (playing && mode) { mode.update(dt, T); if (MATCH) updMatch(dt); }
+  targets.slice().forEach(t => t.upd && t.alive && t.upd(t, dt * ts, TT));
+  if (sceneTick) sceneTick(dt, T);
+  if (aiming) {
+    holdT += dt; const amp = (7 + Math.min(16, holdT * 4)) * R.F.sway * (R.steady ? 0.12 : 1);
+    aimX = ptrX + Math.sin(T * 2.1) * amp + Math.sin(T * 5.3) * amp * 0.35;
+    aimY = ptrY - touchOffset + Math.cos(T * 1.7) * amp * 0.8 + Math.sin(T * 4.1) * amp * 0.3;
+    const a = $('aim'); a.style.left = aimX + 'px'; a.style.top = aimY + 'px';
+  }
+  if (!playing && !ended) {
+    showcaseT += dt;
+    camera.position.set(camBase.pos.x + Math.sin(T * 0.25) * 1.6, camBase.pos.y + 0.3, camBase.pos.z - 0.5 + Math.cos(T * 0.25) * 0.5);
+  } else {
+    const ax = aiming ? (aimX / innerWidth - 0.5) : 0, ay = aiming ? (aimY / innerHeight - 0.5) : 0;
+    camera.position.set(camBase.pos.x + Math.sin(T * 0.5) * 0.03 + ax * 0.12, camBase.pos.y + Math.sin(T * 0.8) * 0.02 - ay * 0.06, camBase.pos.z);
+  }
+  camera.lookAt(camBase.look);
+  glows.forEach(g => { g.material.opacity = 0.55 + 0.45 * Math.sin(T * 8); g.scale.setScalar(1 + 0.06 * Math.sin(T * 8)); });
+  updHand(dt, T); updFlying(dt); updFalling(dt); updParts(dt);
+  renderer.render(scene, camera);
+}
+
+/* ================= Boot ================= */
+const fontsReady = (document.fonts && document.fonts.load) ? Promise.race([Promise.all([document.fonts.load('800 40px Kanit'), document.fonts.load('600 40px Kanit')]), new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
+fontsReady.catch(() => {}).then(() => {
+  $('loading').style.display = 'none';
+  equipHeldDart();
+  if (prof()) renderHome(); else renderReg();
+  loop(); flushQueue(); hello(); setInterval(hello, 20000);
+  const qr = new URLSearchParams(location.search).get('room'); if (qr && prof()) setTimeout(() => joinByCode(qr), 600); else if (qr) store.set('pendingRoom', qr);
+  window.__icdarts = { LEVELS, SCENES, startLevel, openPre, renderShop, renderStats, renderHome, newProfile, prof, get targets() { return targets; }, get mode() { return mode; }, shoot(sx, sy) { shoot(sx, sy); }, project(v) { const p = v.clone().project(camera); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }, get score() { return score; }, get R() { return R; }, useHint, dbg() { return { handState, throwT, pending: !!pendingShot, flying: flying.length, playing, ended }; } };
+});
+})();
+</script>
+</body>
+</html>
