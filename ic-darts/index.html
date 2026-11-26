@@ -231,6 +231,7 @@ tr.meRow td{background:rgba(103,232,249,.12)}
     <div style="font-weight:800">โหมดการเล่น</div>
     <div class="seg" id="p-mode"></div>
     <div class="seg" id="p-bots" style="display:none"></div>
+    <div id="p-sub-w" style="display:none"><div style="font-weight:800">รูปแบบด่าน</div><div class="seg" id="p-sub"></div></div>
     <div style="font-weight:800">ระดับความยาก</div>
     <div class="seg" id="p-diff"></div>
     <div style="font-weight:800;margin-top:4px">ไอเทมที่จะใช้ในด่านนี้ <span class="note">(เลือกได้สูงสุด 3 อย่าง)</span></div>
@@ -1032,6 +1033,83 @@ const PREC_Q = [
   ['🦴', 'ผู้ป่วยกระดูกหักจากอุบัติเหตุ ไม่มีแผลติดเชื้อ', 'std', 'Standard Precautions: ล้างมือ ใช้ PPE ตามความเสี่ยงสัมผัสเลือด/สารคัดหลั่ง'],
 ];
 
+const GEAR = { glove: { e: '🧤', n: 'ถุงมือ' }, gown: { e: '🥼', n: 'เสื้อกาวน์' }, smask: { e: '😷', n: 'หน้ากากอนามัย' }, n95: { e: '🫁', n: 'หน้ากาก N95' }, eye: { e: '🥽', n: 'แว่น/Face shield' } };
+// โรค → อุปกรณ์ PPE ที่ต้องใช้ (นอกเหนือจากล้างมือ ซึ่งต้องทำทุกครั้ง)
+const DISEASE_PPE = [
+  ['🫁', 'วัณโรคปอดระยะแพร่เชื้อ', ['n95'], 'Airborne: หน้ากาก N95 (Fit test/Seal check) + ห้องแยกความดันลบ'],
+  ['🔴', 'โรคหัด (Measles)', ['n95'], 'Airborne: หน้ากาก N95 + ห้องแยกความดันลบ'],
+  ['🤒', 'โรคสุกใส (Varicella)', ['n95', 'glove', 'gown'], 'Airborne + Contact: N95 ร่วมกับถุงมือและเสื้อกาวน์'],
+  ['🤧', 'ไข้หวัดใหญ่ (Influenza)', ['smask'], 'Droplet: หน้ากากอนามัย เว้นระยะ ≥ 1 เมตร'],
+  ['👶', 'โรคไอกรน (Pertussis)', ['smask'], 'Droplet: หน้ากากอนามัย'],
+  ['🧠', 'ไข้กาฬหลังแอ่น (Meningococcal)', ['smask'], 'Droplet: หน้ากากอนามัย จนได้ยาปฏิชีวนะครบ 24 ชม.'],
+  ['🦠', 'แผลติดเชื้อ MRSA', ['glove', 'gown'], 'Contact: ถุงมือ + เสื้อกาวน์ ใช้อุปกรณ์เฉพาะราย'],
+  ['💩', 'ท้องเสียจาก C. difficile', ['glove', 'gown'], 'Contact: ถุงมือ + เสื้อกาวน์ และล้างมือด้วยสบู่และน้ำ'],
+  ['🧫', 'เชื้อดื้อยา CRE', ['glove', 'gown'], 'Contact: ถุงมือ + เสื้อกาวน์ แยกผู้ป่วย/รวมกลุ่ม'],
+  ['🐛', 'โรคหิด (Scabies)', ['glove', 'gown'], 'Contact: ถุงมือ + เสื้อกาวน์'],
+  ['🦠', 'ผู้ป่วยยืนยัน COVID-19', ['n95', 'glove', 'gown', 'eye'], 'N95 + ถุงมือ + เสื้อกาวน์ + แว่น/Face shield'],
+  ['🐔', 'ไข้หวัดนก H5N1', ['n95', 'glove', 'gown', 'eye'], 'Airborne + Contact + ป้องกันตา: ครบชุด'],
+  ['💨', 'ดูดเสมหะผู้ป่วยวัณโรค (หัตถการก่อละออง)', ['n95', 'glove', 'gown', 'eye'], 'หัตถการก่อละอองฝอย: N95 + ถุงมือ + เสื้อกาวน์ + แว่น/Face shield'],
+];
+function PPEDiseaseMode(cfg) {
+  const { lv, F } = cfg; const N = [5, 6, 7][lv - 1]; const keys = Object.keys(GEAR);
+  let qs, idx = 0, picked = [], caseMiss = 0, perfect = 0, qT = 0, busy = false; const lines = [];
+  const slots = () => portrait() ? [[-1.3, 2.35], [0, 2.35], [1.3, 2.35], [-0.65, 1.3], [0.65, 1.3]] : [[-3, 2.25], [-1.5, 1.95], [0, 2.25], [1.5, 1.95], [3, 2.25]];
+  function layout() {
+    const S = slots(), order = shuffle(keys); const amp = (0.04 + lv * 0.04) * F.speed;
+    order.forEach((k, i) => {
+      const o = GEAR[k]; const b = makeBoard({ emoji: o.e, color: '#7c3aed', plate: o.n, r: portrait() ? 0.36 : 0.4 });
+      const top = 3.2, hang = new THREE.Group(); hang.position.set(S[i][0], top, -1.3); b.position.set(0, S[i][1] - top, 0); hang.add(b);
+      const str = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -1, 0)]), new THREE.LineBasicMaterial({ color: '#cbd5e1' })); hang.add(str);
+      hang.userData.face = b.userData.face; hang.userData.r = b.userData.r;
+      const phs = rand(0, 6), data = { k, slot: i, board: b };
+      addTarget(hang, data, (t, dt, T) => {
+        const s = slots()[data.slot]; t.g.position.x += (s[0] - t.g.position.x) * Math.min(1, dt * 4); b.position.y += ((s[1] - top) - b.position.y) * Math.min(1, dt * 4);
+        str.scale.y = Math.max(0.01, -b.position.y - b.userData.r - 0.04);
+        t.g.rotation.z = lv > 1 ? Math.sin(T * 1.6 + phs) * amp : 0; b.rotation.y = Math.sin(T * 0.8 + phs) * 0.2;
+      });
+    });
+  }
+  function paint() { targets.forEach(t => t.data.board.userData.face.material.color.set(picked.includes(t.data.k) ? '#bbf7d0' : '#ffffff')); }
+  function show() {
+    const q = qs[idx]; picked = []; caseMiss = 0; qT = 0; busy = false; paint(); clearGlow();
+    setTask(`ผู้ป่วยรายที่ ${idx + 1}/${N}`);
+    setCard(`<span class="em">${q[0]}</span><div class="big">${q[1]}</div><div class="small">🧴 ล้างมือแล้ว — ปาเลือก PPE ที่ต้องสวมให้ <b>ครบ ${q[2].length} ชิ้น</b> (ห้ามเลือกเกิน)</div><div class="big" id="pk">❓</div>`);
+  }
+  return {
+    start() {
+      qs = shuffle(DISEASE_PPE).slice(0, N); layout(); show();
+      toast('🦠 อ่านชื่อโรค แล้วปาเลือก <b>อุปกรณ์ PPE ตามมาตรฐาน</b> ให้ครบ · เลือกผิดเสียคะแนน', 3200);
+    },
+    update(dt) { if (!busy) qT += dt; },
+    hintTarget() { if (busy || !qs) return null; const need = qs[idx][2].find(k => !picked.includes(k)); return targets.find(t => t.data.k === need); },
+    hit(t, p) {
+      if (busy) { SFX.thunk(); return; } const q = qs[idx]; const k = t.data.k;
+      if (picked.includes(k)) { SFX.thunk(); popText(p, 'เลือกแล้ว', 'info'); return; }
+      if (q[2].includes(k)) {
+        picked.push(k); good(); SFX.ok(); vib(20); hitFX(R.fx, p, '#a78bfa'); addScore(60, p); paint(); clearGlow();
+        $('pk').textContent = picked.map(x => GEAR[x].e).join(' + ') + (picked.length < q[2].length ? ' + ❓' : ' ✅');
+        if (picked.length === q[2].length) {
+          busy = true; if (!caseMiss) perfect++;
+          addScore(Math.max(0, Math.round((12 * F.time - qT) * 8)) + (caseMiss ? 0 : 50), p);
+          toast(`✅ <b>${q[1]}</b><br>${q[3]}`, 2600);
+          if (caseMiss) lines.push(`⚠️ ${q[0]} ${q[1]} → ${q[3]}`);
+          setTimeout(() => {
+            if (!playing) return; idx++;
+            if (idx >= N) { lines.unshift(`✅ เลือก PPE ถูกครบโดยไม่พลาด ${perfect}/${N} ราย`); lines.push('📌 ล้างมือก่อนสวมและหลังถอด PPE ทุกครั้ง · Standard Precautions ใช้กับผู้ป่วยทุกราย'); finish({ lines, ratio: perfect / N }); return; }
+            if (lv === 3) { const sl = shuffle(targets.map(x => x.data.slot)); targets.forEach((x, i) => x.data.slot = sl[i]); }
+            show();
+          }, 1500);
+        }
+      } else {
+        if (useShield(p)) return;
+        caseMiss++; bad(); SFX.bad(); vib([30, 40, 30]); missFX(p); addScore(-30, p);
+        toast(caseMiss >= 2 ? `❌ <b>${GEAR[k].n}</b> ไม่จำเป็นสำหรับโรคนี้<br>💡 ${q[3]}` : `❌ <b>${GEAR[k].n}</b> ไม่จำเป็นสำหรับ${q[1]} — ลองคิดว่าโรคนี้แพร่ทางไหน`, 3200);
+      }
+    },
+    miss() {},
+  };
+}
+
 /* ================= Modes ================= */
 // cfg: { lv:1..3, F: difficulty object }
 function WardMode(cfg) {
@@ -1184,9 +1262,10 @@ const TIERS = [{ n: 'พื้นฐาน', d: 'เป้านิ่ง เน
 const SCENES = [
   { id: 'ward', emoji: '🏥', name: 'หอผู้ป่วยใน', sub: 'ปาไล่เชื้อโรค', grad: 'linear-gradient(135deg,#f59e0b,#ea580c)', build: buildWard, mode: cfg => WardMode(cfg),
     desc: ['ปาลูกโป่งเชื้อดื้อยาให้แตก ระวังลูกโป่ง "มือสะอาด"', 'ลูกโป่งมากขึ้น เร็วขึ้น เชื้อชนิดใหม่', 'ลูกโป่งส่ายซิกแซก มือสะอาดเยอะขึ้น'] },
-  { id: 'iso', emoji: '🧑‍⚕️', name: 'ห้องแยกโรค', sub: 'ลำดับ PPE', grad: 'linear-gradient(135deg,#0ea5e9,#4f46e5)', build: buildIso,
-    mode: cfg => SeqMode(cfg, { items: PPE, phases: PPE_PHASES, z: -1.3, intro: '🧑‍⚕️ ปาเป้าอุปกรณ์ตาม <b>ลำดับที่ถูกต้อง</b>' }),
-    desc: ['ลำดับการสวม PPE ก่อนเข้าห้อง', 'สวม แล้วต่อด้วยลำดับการถอด', 'สวม–ถอด เป้าสลับตำแหน่งทุกครั้งที่ปาถูก'] },
+  { id: 'iso', emoji: '🧑‍⚕️', name: 'ห้องแยกโรค', sub: 'PPE ตามมาตรฐาน', grad: 'linear-gradient(135deg,#0ea5e9,#4f46e5)', build: buildIso,
+    mode: cfg => cfg.sub === 'dis' ? PPEDiseaseMode(cfg) : SeqMode(cfg, { items: PPE, phases: PPE_PHASES, z: -1.3, intro: '🧑‍⚕️ ปาเป้าอุปกรณ์ตาม <b>ลำดับที่ถูกต้อง</b>' }),
+    subs: [['seq', '🔢 ลำดับสวม–ถอด', 'สวมก่อนเข้า ถอดก่อนออก'], ['dis', '🦠 เลือก PPE ตามโรค', 'โรคละชุด 5–7 โรค']],
+    desc: ['ลำดับการสวม PPE ก่อนเข้าห้อง · หรือเลือก PPE ตามโรค 5 โรค', 'สวม แล้วต่อด้วยลำดับการถอด · หรือเลือก PPE ตามโรค 6 โรค', 'สวม–ถอด เป้าสลับตำแหน่ง · หรือเลือก PPE ตามโรค 7 โรค เป้าแกว่งและสลับ'] },
   { id: 'waste', emoji: '🗑️', name: 'จุดพักขยะ', sub: 'แยกขยะ', grad: 'linear-gradient(135deg,#16a34a,#0d9488)', build: buildWaste,
     mode: cfg => QuizMode(cfg, { boards: WASTE_BINS.map(b => ({ k: b.k, e: b.e, label: b.n, c: b.c })), qs: WASTE_Q, n: [6, 10, 12], perQ: 8, r: .45, rP: .4, maxX: .5,
       pos: (i, P) => P ? [i % 2 ? 0.75 : -0.75, i < 2 ? 2.55 : 1.55, -0.6] : [(i - 1.5) * 2.1, 2.45, -2.4], moveX: [0, .08, .25], moveY: [0, .06, .1],
@@ -1227,7 +1306,7 @@ function buildScene(si) {
   camBase.pos.set(...info.cam); camBase.look.set(...info.look);
   camera.position.copy(camBase.pos); camera.lookAt(camBase.look);
 }
-function startLevel(li, diffIdx, chosen, match) {
+function startLevel(li, diffIdx, chosen, match, sub) {
   const L = LEVELS[li], S = SCENES[L.si], p = prof(); hideToast(); curLevel = li;
   srand = match && match.seed ? mulberry32(match.seed) : Math.random; setupMatch(match, L, diffIdx);
   buildScene(L.si);
@@ -1240,7 +1319,9 @@ function startLevel(li, diffIdx, chosen, match) {
   $('h-scene').textContent = `ด่าน ${L.no} · ${S.emoji} ${S.name} · ${DIFF[diffIdx].e} ${DIFF[diffIdx].n}` + (MATCH ? (MATCH.type === 'bot' ? ' · 🤖 แข่งบอท' : ' · 👥 ห้อง ' + MATCH.code) : '');
   $('hud').style.display = 'block'; $('hint').style.display = 'block'; show(null);
   equipHeldDart();
-  mode = S.mode({ lv: L.lv, F: R.F }); mode.start(); renderTools(); renderRace(); netStatus('play');
+  sub = sub || (match && match.room && match.room.sub) || (S.subs ? (p.sub && p.sub[S.id]) || S.subs[0][0] : '');
+  if (S.subs) $('h-scene').textContent += ' · ' + S.subs.find(x => x[0] === sub)[1];
+  mode = S.mode({ lv: L.lv, F: R.F, sub }); mode.start(); renderTools(); renderRace(); netStatus('play');
   setTimeout(() => { $('hint').style.display = 'none'; }, 5000);
 }
 function renderTools() {
@@ -1312,6 +1393,11 @@ function openPre(i) {
   $('p-desc').innerHTML = `<b>${esc(S.sub)} · ${TIERS[L.lv - 1].n}</b><br>${esc(S.desc[L.lv - 1])}`;
   const dsel = () => { $('p-diff').innerHTML = DIFF.map((d, k) => `<button class="${k === p.diff ? 'on' : ''}" data-k="${k}">${d.e} ${d.n}<small>เหรียญ ×${d.coin}</small></button>`).join(''); $('p-diff').querySelectorAll('button').forEach(b => b.onclick = () => { p.diff = +b.dataset.k; saveProf(); dsel(); }); };
   dsel();
+  $('p-sub-w').style.display = S.subs ? 'block' : 'none';
+  const ssel = () => { if (!S.subs) return; p.sub = p.sub || {}; const cur = p.sub[S.id] || S.subs[0][0];
+    $('p-sub').innerHTML = S.subs.map(([k, n, d]) => `<button class="${k === cur ? 'on' : ''}" data-k="${k}">${n}<small>${d}</small></button>`).join('');
+    $('p-sub').querySelectorAll('button').forEach(b => b.onclick = () => { p.sub[S.id] = b.dataset.k; saveProf(); ssel(); }); };
+  ssel();
   const isQuiz = S.id !== 'ward';
   const isel = () => {
     $('p-items').innerHTML = Object.entries(POWER).map(([k, o]) => { const have = p.inv[k] || 0, na = o.quiz && !isQuiz; const on = preSel.includes(k);
@@ -1528,9 +1614,11 @@ function openLobby(li, diff, items) {
   NET.lob = { li, diff, items: items || [] }; netStatus('lobby'); show('lobby'); renderLobby(); hello();
   menuShow(LEVELS[li].si); clearInterval(NET.poll); NET.poll = setInterval(lobbyPoll, 2500);
 }
+function lobSub() { const S = SCENES[LEVELS[NET.lob.li].si]; return S.subs ? ((prof().sub || {})[S.id] || S.subs[0][0]) : ''; }
 function lobbyText() {
   const L = LEVELS[NET.room ? NET.room.level : NET.lob.li], S = SCENES[L.si], d = DIFF[NET.room ? NET.room.diff : NET.lob.diff];
-  return `ด่าน ${L.no} · ${S.emoji} ${S.name} (${TIERS[L.lv - 1].n}) · ${d.e} ${d.n}`;
+  const sb = S.subs ? ' · ' + S.subs.find(x => x[0] === ((NET.room && NET.room.sub) || lobSub()))[1] : '';
+  return `ด่าน ${L.no} · ${S.emoji} ${S.name} (${TIERS[L.lv - 1].n}) · ${d.e} ${d.n}${sb}`;
 }
 function renderLobby() {
   if (!$('lobby').classList.contains('show')) return;
@@ -1566,8 +1654,8 @@ function renderLobby() {
   }
   B.innerHTML = `<div class="lb">${roomBox}${onlineBox}</div>`;
   const on = (id, f) => { const e = $(id); if (e) e.onclick = f; };
-  on('l-create', () => roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false }));
-  on('l-quick', () => roomCall('room_quick', { level: NET.lob.li, diff: NET.lob.diff }));
+  on('l-create', () => roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false, sub: lobSub() }));
+  on('l-quick', () => roomCall('room_quick', { level: NET.lob.li, diff: NET.lob.diff, sub: lobSub() }));
   on('l-join', () => joinByCode($('l-code').value));
   on('l-start', () => roomCall('room_start', { code: room.code }));
   on('l-leave', () => roomLeave());
@@ -1609,7 +1697,7 @@ async function joinByCode(code) {
 }
 async function roomLeave() { if (!NET.room) return; const code = NET.room.code; NET.room = null; renderLobby(); try { await API.call('room_leave', Object.assign(auth(), { code })); } catch (e) {} }
 async function inviteIds(ids) {
-  if (!NET.room) { const r = await roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false }); if (!r) return; }
+  if (!NET.room) { const r = await roomCall('room_create', { level: NET.lob.li, diff: NET.lob.diff, pub: false, sub: lobSub() }); if (!r) return; }
   let ok = 0; for (const to of ids) { try { const r = await API.call('invite', Object.assign(auth(), { to, code: NET.room.code })); if (r && r.ok) ok++; } catch (e) {} }
   const names = ids.map(id => (NET.online.players.find(x => x.id === id) || {}).name).filter(Boolean).join(', ');
   toast(ok ? `📨 ส่งคำชวนถึง <b>${esc(names)}</b> แล้ว รอเพื่อนกดเข้าร่วม` : 'ส่งคำชวนไม่สำเร็จ', 3000);

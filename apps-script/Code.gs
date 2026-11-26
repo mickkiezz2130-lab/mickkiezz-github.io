@@ -170,7 +170,7 @@ const MP = {
   },
   room_create(d, me) {
     const code = newCode_();
-    const room = { code: code, host: me.id, level: num_(d.level), diff: num_(d.diff), seed: Math.floor(Math.random() * 1e9), pub: !!d.pub, state: 'wait', created: Date.now(), startAt: 0, players: {} };
+    const room = { code: code, host: me.id, level: num_(d.level), diff: num_(d.diff), seed: Math.floor(Math.random() * 1e9), sub: clean_(d.sub, 6), pub: !!d.pub, state: 'wait', created: Date.now(), startAt: 0, players: {} };
     room.players[me.id] = player_(me); cput_('room:' + code, room);
     if (room.pub) { const l = cget_('pubrooms') || []; l.push(code); cput_('pubrooms', l.slice(-30), 900); }
     return { ok: true, room: roomOut_(room) };
