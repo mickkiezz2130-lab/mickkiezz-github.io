@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ปาเป้าพิชิตเชื้อ 3D — เกมความรู้ป้องกันและควบคุมการติดเชื้อ</title>
-<meta name="description" content="เกมปาลูกดอก 3 มิติ 6 ฉาก 18 ด่าน ฝึกความรู้การป้องกันและควบคุมการติดเชื้อ: ไล่เชื้อโรค PPE แยกขยะ 5 Moments ล้างมือ 7 ขั้นตอน และ Isolation precautions">
+<meta name="description" content="เกมปาลูกดอก 3 มิติ 7 ฉาก 21 ด่าน ฝึกความรู้การป้องกันและควบคุมการติดเชื้อ: ไล่เชื้อโรค PPE แยกขยะ 5 Moments ล้างมือ 7 ขั้นตอน Isolation precautions และตอบคำถาม">
 <meta property="og:title" content="ปาเป้าพิชิตเชื้อ 3D">
-<meta property="og:description" content="เกมปาลูกดอก 3 มิติ ธีมป้องกันและควบคุมการติดเชื้อ 6 ฉาก 18 ด่าน สะสมเหรียญ แลกไอเทม ดูอันดับ">
+<meta property="og:description" content="เกมปาลูกดอก 3 มิติ ธีมป้องกันและควบคุมการติดเชื้อ 7 ฉาก 21 ด่าน สะสมเหรียญ แลกไอเทม ดูอันดับ">
 <meta name="theme-color" content="#0f172a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -216,7 +216,7 @@ tr.meRow td{background:rgba(103,232,249,.12)}
     <div class="sync" id="m-sync"></div>
     <div class="logo">🎯</div>
     <h1>ปาเป้าพิชิตเชื้อ 3D</h1>
-    <div class="sub">6 ฉาก · 18 ด่าน · ผ่านด่าน (ได้ ★ อย่างน้อย 1 ดวง) เพื่อปลดล็อกด่านถัดไป</div>
+    <div class="sub">7 ฉาก · 21 ด่าน · ผ่านด่าน (ได้ ★ อย่างน้อย 1 ดวง) เพื่อปลดล็อกด่านถัดไป</div>
     <div id="map"></div>
     <div class="credit">หน่วยป้องกันและควบคุมการติดเชื้อ โรงพยาบาลบุรีรัมย์</div>
   </div>
@@ -763,6 +763,21 @@ function renderSync() {
   $('m-sync').textContent = API.on() ? (q ? `⏳ รอส่งคะแนนขึ้นระบบ ${q} รายการ` : '🌐 ออนไลน์: คะแนนบันทึกขึ้นระบบโรงพยาบาลแล้ว') : '💾 โหมดเก็บในเครื่อง (ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์อันดับรวม)';
 }
 
+/* ===== โจทย์จาก Google Sheet (แก้/เพิ่มได้เองในชีต โจทย์_PPE และ โจทย์_คำถาม) ===== */
+function applyContent(c) {
+  if (!c) return;
+  const gk = Object.keys(GEAR);
+  const ppe = (c.ppe || []).filter(r => r && r.n && Array.isArray(r.ppe) && r.ppe.length && r.ppe.every(k => gk.includes(k)));
+  if (ppe.length >= 7) { DISEASE_PPE.length = 0; ppe.forEach(r => DISEASE_PPE.push([esc(r.e || '🦠'), esc(r.n), r.ppe, esc(r.x || '')])); }
+  const quiz = (c.quiz || []).filter(r => r && r.q && r.a && Array.isArray(r.w) && r.w.length === 3);
+  if (quiz.length >= 12) { QUIZ_BANK.length = 0; quiz.forEach(r => QUIZ_BANK.push({ q: String(r.q), a: String(r.a), w: r.w.map(String), x: String(r.x || '') })); }
+}
+async function loadContent() {
+  applyContent(store.get('content', null));
+  if (!API.on()) return;
+  try { const r = await API.call('content', {}); if (r && r.ok) { store.set('content', { ppe: r.ppe, quiz: r.quiz }); applyContent(r); } } catch (e) {}
+}
+
 /* ================= Game state ================= */
 let world = null, backdrop = [], targets = [], mode = null, sceneTick = null;
 let curLevel = 0, score = 0, playing = false, ended = false;
@@ -964,6 +979,35 @@ function buildER(G) {
   return { back, cam: [0, 1.6, 4.4], look: [0, 1.75, -1.4], tick: (dt, T) => { const on = Math.sin(T * 7) > 0; red.intensity = on ? 2.2 : 0; blue.intensity = on ? 0 : 2.2; } };
 }
 
+function buildQuizRoom(G) {
+  scene.background = new THREE.Color('#fef3c7'); scene.fog = new THREE.Fog('#fef3c7', 14, 32);
+  const wood = tileTex('#c08457', '#b45309', 8, '#92400e');
+  const back = room(G, { w: 12, d: 10, h: 3.5, zBack: -4.5, floor: wood, floorRough: .5, wall: '#fffbeb', band: '#f59e0b', ceil: '#ffffff' });
+  // projector screen
+  const scr = ctex(1024, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#0e7490'); gr.addColorStop(1, '#4338ca'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#fff'; g.textAlign = 'center'; fitText(g, 'IC QUIZ', w - 100, 150); g.fillText('IC QUIZ', w / 2, 200); fitText(g, 'แบบทดสอบความรู้ป้องกันและควบคุมการติดเชื้อ', w - 120, 48, 600); g.fillText('แบบทดสอบความรู้ป้องกันและควบคุมการติดเชื้อ', w / 2, 300);
+    g.font = `120px ${FONT}`; g.fillText('🦠  🧴  😷  🧤', w / 2, 450); });
+  plane(4.2, 2.1, scr, 0, 2.2, -4.43, G, true);
+  box(4.4, 0.08, 0.12, M('#1f2937'), 0, 3.3, -4.4, G);
+  // whiteboard + notes
+  box(2.4, 1.3, 0.05, M('#f8fafc', { roughness: .2 }), -4.2, 1.8, -4.44, G);
+  poster(G, ['Standard Precautions', 'ล้างมือ · PPE · ทิ้งของมีคมถูกที่'], -4.2, 1.85, -4.4, 0, 2.1, 0.9, '#ffffff', '#1e3a8a');
+  poster(G, ['ห้องประชุม IC', 'อบรมความรู้ประจำเดือน'], 4.2, 2.3, -4.43, 0, 2.0, 0.6, '#f59e0b', '#ffffff');
+  // tables & chairs
+  const tbl = M('#f1f5f9', { roughness: .4 }), leg = M('#64748b', { metalness: .5 }), seat = M('#0d9488', { roughness: .7 });
+  [[-4.3, -1.4], [4.3, -1.4], [-4.3, 0.9], [4.3, 0.9]].forEach(([x, z]) => {
+    box(2.2, 0.06, 0.8, tbl, x, 0.75, z, G); [[-1, -.3], [1, -.3], [-1, .3], [1, .3]].forEach(([a, b]) => box(0.05, 0.75, 0.05, leg, x + a, 0.37, z + b, G));
+    [-0.6, 0.6].forEach(a => { box(0.45, 0.06, 0.45, seat, x + a, 0.45, z + 0.65, G); box(0.45, 0.5, 0.06, seat, x + a, 0.72, z + 0.88, G); });
+    box(0.3, 0.02, 0.22, M('#ffffff'), x - 0.4, 0.79, z, G); cyl(0.04, 0.04, 0.1, M('#ef4444'), x + 0.5, 0.83, z, G, 10);
+  });
+  // plant + window
+  cyl(0.2, 0.16, 0.4, M('#92400e'), 5.4, 0.2, -3.9, G); mesh(new THREE.IcosahedronGeometry(0.45, 1), M('#16a34a', { flatShading: true }), 5.4, 0.75, -3.9, G);
+  windowPane(G, 5.94, 2.0, -0.5, 2.6, 1.4, skyTex([[0, '#38bdf8'], [1, '#e0f2fe']]), -Math.PI / 2);
+  dispenser(G, -5.93, 1.35, 0.5, Math.PI / 2);
+  lightsIndoor(G, { sun: '#fff7e6', sunPos: [8, 7, 2], sunI: 1.4, hemi: 0.9 });
+  return { back, cam: [0, 1.6, 4.4], look: [0, 1.6, -1.0] };
+}
+
 /* ================= Content ================= */
 const GERMS = [
   { n: 'MRSA', e: '🦠', c: '#dc2626', f: '<b>MRSA</b> แพร่ทางการสัมผัส → ล้างมือ + Contact Precautions' },
@@ -1035,6 +1079,38 @@ const PREC_Q = [
 
 const GEAR = { glove: { e: '🧤', n: 'ถุงมือ' }, gown: { e: '🥼', n: 'เสื้อกาวน์' }, smask: { e: '😷', n: 'หน้ากากอนามัย' }, n95: { e: '🫁', n: 'หน้ากาก N95' }, eye: { e: '🥽', n: 'แว่น/Face shield' } };
 // โรค → อุปกรณ์ PPE ที่ต้องใช้ (นอกเหนือจากล้างมือ ซึ่งต้องทำทุกครั้ง)
+const QUIZ_BANK = [
+  { q: 'ล้างมือด้วยแอลกอฮอล์เจล (Hand rub) ควรถูให้ทั่วนานเท่าใด', a: '20–30 วินาที', w: ['5 วินาที', '2 นาที', '5 นาที'], x: 'Alcohol hand rub ถูให้ทั่วจนแห้ง 20–30 วินาที' },
+  { q: 'ล้างมือด้วยน้ำและสบู่ ควรใช้เวลาประมาณเท่าใด', a: '40–60 วินาที', w: ['10 วินาที', '3 นาที', '15 วินาที'], x: 'ล้างมือด้วยน้ำและสบู่ 7 ขั้นตอน ใช้เวลา 40–60 วินาที' },
+  { q: 'กรณีใดควรล้างมือด้วยน้ำและสบู่ แทนแอลกอฮอล์เจล', a: 'มือเปื้อนสิ่งสกปรกที่มองเห็น หรือดูแลผู้ป่วย C. difficile', w: ['ก่อนจับตัวผู้ป่วยทุกครั้ง', 'หลังจับราวเตียง', 'ก่อนเตรียมยารับประทาน'], x: 'สิ่งสกปรกที่มองเห็นและสปอร์ C. difficile ต้องใช้น้ำและสบู่' },
+  { q: 'แอลกอฮอล์ล้างมือควรมีความเข้มข้นเท่าใดจึงมีประสิทธิภาพ', a: '60–80%', w: ['10–20%', '30–40%', '95–100%'], x: 'แอลกอฮอล์ 60–80% ฆ่าเชื้อได้ดีที่สุด' },
+  { q: 'หลังสวมหน้ากาก N95 ทุกครั้ง ต้องทำสิ่งใด', a: 'ตรวจการรั่ว (Seal check)', w: ['ล้างหน้ากากด้วยน้ำ', 'พับหน้ากากครึ่งหนึ่ง', 'สวมหน้ากากอนามัยทับ'], x: 'ทำ Seal check ทุกครั้งที่สวม และทำ Fit test ตามรอบที่กำหนด' },
+  { q: 'Standard Precautions ใช้กับผู้ป่วยกลุ่มใด', a: 'ผู้ป่วยทุกราย', w: ['เฉพาะผู้ป่วย HIV', 'เฉพาะผู้ป่วยในห้องแยกโรค', 'เฉพาะผู้ป่วยที่มีไข้'], x: 'ถือว่าเลือดและสารคัดหลั่งของทุกคนอาจติดเชื้อได้' },
+  { q: 'ผู้ป่วยวัณโรคปอดระยะแพร่เชื้อ ควรอยู่ห้องแบบใด', a: 'ห้องแยกความดันลบ', w: ['ห้องความดันบวก', 'ห้องรวมใกล้ประตู', 'ห้องพักญาติ'], x: 'Airborne Precautions: ห้องความดันลบ และสวม N95' },
+  { q: 'ผู้ป่วยไข้หวัดใหญ่ ควรเว้นระยะห่างจากผู้อื่นอย่างน้อยเท่าใด', a: '1 เมตร', w: ['10 เซนติเมตร', '30 เซนติเมตร', 'ไม่ต้องเว้นระยะ'], x: 'Droplet Precautions: หน้ากากอนามัย และเว้นระยะอย่างน้อย 1 เมตร' },
+  { q: 'การถอด PPE ตามลำดับ (CDC) ควรถอดสิ่งใดก่อน', a: 'ถุงมือ', w: ['หน้ากาก', 'แว่น/Face shield', 'เสื้อกาวน์ก่อนเสมอ'], x: 'ถุงมือปนเปื้อนมากที่สุด จึงถอดก่อน · หน้ากากถอดหลังออกจากห้อง' },
+  { q: 'หลังถอดถุงมือ ต้องทำอย่างไร', a: 'ล้างมือทุกครั้ง', w: ['ไม่ต้องล้างมือ เพราะใส่ถุงมือแล้ว', 'ล้างเฉพาะเมื่อถุงมือขาด', 'เช็ดมือกับเสื้อกาวน์'], x: 'ถุงมืออาจมีรูรั่วและมือปนเปื้อนขณะถอด' },
+  { q: 'เชื้อใดสร้างสปอร์ที่ทนต่อแอลกอฮอล์', a: 'Clostridioides difficile', w: ['Staphylococcus aureus', 'Escherichia coli', 'ไวรัสไข้หวัดใหญ่'], x: 'C. difficile สร้างสปอร์ ต้องล้างมือด้วยน้ำและสบู่' },
+  { q: 'น้ำยาเช็ดพื้นผิวในห้องผู้ป่วย C. difficile ที่เหมาะสม', a: 'สารประกอบคลอรีน (Hypochlorite)', w: ['แอลกอฮอล์ 70%', 'น้ำเปล่า', 'น้ำหอมปรับอากาศ'], x: 'สปอร์ต้องใช้สารที่ฆ่าสปอร์ได้ เช่น Hypochlorite' },
+  { q: 'ภาชนะทิ้งของมีคม ควรปิดและเปลี่ยนเมื่อบรรจุถึงระดับใด', a: '3 ใน 4 ของภาชนะ', w: ['เต็มจนล้น', '1 ใน 4 ของภาชนะ', 'เมื่อครบ 1 เดือนเท่านั้น'], x: 'บรรจุไม่เกิน 3/4 เพื่อป้องกันเข็มทิ่มตำ' },
+  { q: 'เมื่อถูกเข็มที่ใช้กับผู้ป่วยตำ ควรทำสิ่งใดเป็นอันดับแรก', a: 'ล้างแผลด้วยน้ำสะอาดและสบู่ทันที แล้วรายงาน', w: ['บีบเค้นเลือดออกแรงๆ', 'ใช้ปากดูดแผล', 'รอเลิกเวรค่อยรายงาน'], x: 'ล้างแผลทันที ไม่บีบเค้น และรายงานเพื่อประเมินความเสี่ยงและรับยา PEP' },
+  { q: 'ยาป้องกันหลังสัมผัสเชื้อ HIV (PEP) ควรเริ่มเมื่อใด', a: 'เร็วที่สุด ภายใน 72 ชั่วโมง', w: ['หลังสัมผัส 1 สัปดาห์', 'เมื่อมีอาการไข้', 'หลังผลเลือดเป็นบวก'], x: 'ยิ่งเร็วยิ่งดี ควรภายใน 1–2 ชม. และไม่เกิน 72 ชม.' },
+  { q: 'ข้อใดเป็นการปฏิบัติที่ "ไม่ควรทำ" หลังใช้เข็มฉีดยา', a: 'สวมปลอกเข็มกลับด้วยสองมือ', w: ['ทิ้งลงภาชนะของมีคมทันที', 'ใช้เทคนิคมือเดียวหากจำเป็นต้องสวมปลอก', 'ทิ้งทั้งกระบอกโดยไม่ถอดเข็ม'], x: 'การสวมปลอกเข็มสองมือเสี่ยงต่อเข็มตำมือ' },
+  { q: 'ถุงเก็บปัสสาวะของผู้ป่วยคาสายสวน ควรอยู่ตำแหน่งใด', a: 'ต่ำกว่ากระเพาะปัสสาวะ และไม่วางกับพื้น', w: ['สูงกว่าระดับเตียง', 'วางบนพื้นข้างเตียง', 'วางบนตัวผู้ป่วย'], x: 'CAUTI Bundle: ระบบปิด ไหลลงตามแรงโน้มถ่วง ไม่ให้ถุงแตะพื้น' },
+  { q: 'ควรประเมินความจำเป็นในการคาสายสวนปัสสาวะบ่อยเพียงใด', a: 'ทุกวัน', w: ['เดือนละครั้ง', 'เมื่อสายอุดตันเท่านั้น', 'ไม่ต้องประเมิน'], x: 'ถอดสายเร็วที่สุดเมื่อหมดข้อบ่งชี้ ลดความเสี่ยง CAUTI' },
+  { q: 'การป้องกันปอดอักเสบจากเครื่องช่วยหายใจ (VAP) ควรจัดท่าศีรษะสูงเท่าใด', a: '30–45 องศา', w: ['0 องศา (นอนราบ)', '10 องศา', '90 องศาตลอดเวลา'], x: 'VAP Bundle: ศีรษะสูง 30–45 องศา ถ้าไม่มีข้อห้าม' },
+  { q: 'น้ำยาทำความสะอาดผิวหนังก่อนใส่สายสวนหลอดเลือดดำส่วนกลาง (central line) ที่แนะนำ', a: 'Chlorhexidine > 0.5% ในแอลกอฮอล์', w: ['น้ำเกลือ', 'สบู่ทั่วไป', 'น้ำยาล้างจาน'], x: 'CLABSI Bundle: Chlorhexidine-alcohol และรอให้แห้งก่อนแทงเข็ม' },
+  { q: 'ก่อนผ่าตัด หากจำเป็นต้องกำจัดขน ควรใช้วิธีใด', a: 'ใช้เครื่องตัดขน (Clipper)', w: ['โกนด้วยมีดโกนคืนก่อนผ่าตัด', 'ถอนขนด้วยแหนบ', 'ใช้ครีมกำจัดขนบนแผล'], x: 'การโกนทำให้เกิดแผลถลอก เพิ่มความเสี่ยง SSI' },
+  { q: 'เครื่องมือที่สัมผัสเนื้อเยื่อปราศจากเชื้อ (Critical items) ต้องผ่านกระบวนการใด', a: 'ทำให้ปราศจากเชื้อ (Sterilization)', w: ['เช็ดด้วยแอลกอฮอล์', 'ล้างน้ำเปล่า', 'ตากแดด'], x: 'Spaulding: Critical → Sterilization' },
+  { q: 'หูฟังแพทย์ (Stethoscope) จัดเป็นอุปกรณ์กลุ่มใด', a: 'Non-critical: ทำความสะอาด/ฆ่าเชื้อระดับต่ำ', w: ['Critical: ต้องนึ่งฆ่าเชื้อ', 'Semi-critical: ฆ่าเชื้อระดับสูง', 'ใช้ครั้งเดียวทิ้งเสมอ'], x: 'สัมผัสผิวหนังที่ไม่มีแผล → เช็ดด้วยแอลกอฮอล์ 70% ระหว่างผู้ป่วย' },
+  { q: 'ขยะติดเชื้อ ต้องทิ้งในถุงสีใด', a: 'สีแดง', w: ['สีดำ', 'สีเหลือง', 'ถุงใสทั่วไป'], x: 'ขยะติดเชื้อใช้ถุงแดง มีสัญลักษณ์ชีวอันตราย' },
+  { q: 'วัคซีนใดที่บุคลากรทางการแพทย์ควรได้รับทุกปี', a: 'ไข้หวัดใหญ่', w: ['บาดทะยัก', 'อีสุกอีใส', 'ไวรัสตับอักเสบบี'], x: 'ไข้หวัดใหญ่เปลี่ยนสายพันธุ์ ต้องฉีดทุกปี' },
+  { q: 'ห้องแยกโรคความดันลบ ควรเปลี่ยนอากาศอย่างน้อยกี่รอบต่อชั่วโมง (ACH)', a: '12 รอบ', w: ['1 รอบ', '3 รอบ', '100 รอบ'], x: 'แนะนำ ≥ 12 ACH และระบายอากาศออกภายนอกหรือผ่าน HEPA' },
+  { q: 'ผู้ป่วยติดเชื้อ MRSA ควรได้รับการดูแลแบบใด', a: 'Contact Precautions', w: ['Airborne Precautions', 'ไม่ต้องแยก', 'Droplet Precautions เท่านั้น'], x: 'MRSA แพร่ทางสัมผัส: ถุงมือ เสื้อกาวน์ อุปกรณ์เฉพาะราย' },
+  { q: 'Moment ที่ 2 ของการล้างมือ (5 Moments) คือข้อใด', a: 'ก่อนทำหัตถการสะอาด/ปราศจากเชื้อ', w: ['หลังสัมผัสผู้ป่วย', 'ก่อนเข้าห้องน้ำ', 'หลังสัมผัสสิ่งแวดล้อมรอบผู้ป่วย'], x: '5 Moments: 1 ก่อนสัมผัส · 2 ก่อนหัตถการปราศจากเชื้อ · 3 หลังสารคัดหลั่ง · 4 หลังสัมผัส · 5 หลังสิ่งแวดล้อม' },
+  { q: 'การล้างมือ 7 ขั้นตอน ขั้นตอนสุดท้ายคือข้อใด', a: 'ถูรอบข้อมือ', w: ['ฝ่ามือถูฝ่ามือ', 'ถูนิ้วหัวแม่มือ', 'ปลายนิ้วถูฝ่ามือ'], x: 'ขั้นที่ 7: ถูรอบข้อมือทั้งสองข้าง' },
+  { q: 'ผ้าปูที่นอนเปื้อนเลือดผู้ป่วย ควรจัดการอย่างไร', a: 'ม้วนเก็บด้านเปื้อนไว้ด้านใน ใส่ถุงผ้าติดเชื้อ ไม่สะบัด', w: ['สะบัดผ้าก่อนพับ', 'วางบนพื้นห้องผู้ป่วย', 'ล้างเองในอ่างล้างมือ'], x: 'ลดการฟุ้งกระจายของเชื้อ และส่งซักตามระบบ' },
+];
 const DISEASE_PPE = [
   ['🫁', 'วัณโรคปอดระยะแพร่เชื้อ', ['n95'], 'Airborne: หน้ากาก N95 (Fit test/Seal check) + ห้องแยกความดันลบ'],
   ['🔴', 'โรคหัด (Measles)', ['n95'], 'Airborne: หน้ากาก N95 + ห้องแยกความดันลบ'],
@@ -1214,20 +1290,22 @@ function QuizMode(cfg, def) {
   let qs, idx = 0, qT = 0, correct = 0, busy = false; const lines = [];
   function show() {
     const q = qs[idx]; qT = 0; busy = false; clearGlow(); setTask(`${def.qName} ${idx + 1}/${N}`);
-    setCard(`<span class="em">${q[0]}</span><div class="big">${q[1]}</div><div class="small">${def.ask}</div><div id="bar"><i id="bi"></i></div>`);
+    if (q[4]) setCard(`<div class="big" style="font-size:18px">❓ ${esc(q[1])}</div><div style="text-align:left;margin:6px auto 0;max-width:520px;font-size:15px;line-height:1.45">${q[4].map((c, i) => `<div><b style="color:#fde68a">${'กขคง'[i]}.</b> ${esc(c)}</div>`).join('')}</div><div class="small">${def.ask}</div><div id="bar"><i id="bi"></i></div>`);
+    else setCard(`<span class="em">${q[0]}</span><div class="big">${q[1]}</div><div class="small">${def.ask}</div><div id="bar"><i id="bi"></i></div>`);
   }
+  const ansName = (q, b) => q[4] ? `${b.e}. ${q[4]['abcd'.indexOf(b.k)]}` : (b.p || b.label);
   function next(delay) {
     setTimeout(() => {
       if (!playing) return; idx++;
-      if (idx >= N) { lines.unshift(`✅ ถูก ${correct}/${N} ข้อ`); if (def.sum) lines.push(def.sum); finish({ lines, ratio: correct / N }); return; }
+      if (idx >= N) { lines.unshift(`✅ ถูก ${correct}/${N} ข้อ`); if (def.sum && (!def.noCover || correct < N)) lines.push(def.sum); finish({ lines, ratio: correct / N }); return; }
       if (lv === 3 && def.shuffle && idx % 3 === 0) { const sl = shuffle(targets.map(t => t.data.slot)); targets.forEach((t, i) => t.data.slot = sl[i]); toast('🔀 เป้าสลับตำแหน่ง!', 1500); }
       show();
     }, delay);
   }
   return {
     start() {
-      qs = shuffle(def.qs).slice(0, N);
-      def.boards.forEach(b => { if (!qs.some(q => q[2] === b.k)) { const pool = def.qs.filter(q => q[2] === b.k && !qs.includes(q)); if (pool.length) qs[Math.floor(srand() * N)] = pool[Math.floor(srand() * pool.length)]; } });
+      const bank = def.qs; qs = shuffle(bank).slice(0, N);
+      if (!def.noCover) def.boards.forEach(b => { if (!qs.some(q => q[2] === b.k)) { const pool = bank.filter(q => q[2] === b.k && !qs.includes(q)); if (pool.length) qs[Math.floor(srand() * N)] = pool[Math.floor(srand() * pool.length)]; } });
       qs = shuffle(qs);
       def.boards.forEach((b, i) => {
         const P = portrait(); const g = makeBoard({ emoji: b.e, label: b.label, color: b.c, plate: b.p, r: P ? def.rP : def.r });
@@ -1246,11 +1324,11 @@ function QuizMode(cfg, def) {
     hintTarget() { if (busy || !qs) return null; return targets.find(t => t.data.k === qs[idx][2]); },
     hit(t, p) {
       if (busy) { SFX.thunk(); return; } const q = qs[idx]; const right = def.boards.find(b => b.k === q[2]);
-      if (t.data.k === q[2]) { busy = true; correct++; good(); SFX.ok(); vib(20); hitFX(R.fx, p, right.c); addScore(100 + Math.max(0, Math.round((perQ - qT) * 10)), p); toast(`✅ <b>${q[1]}</b> → ${right.e} ${right.p || right.label}<br>${q[3]}`, 2400); next(1300); }
+      if (t.data.k === q[2]) { busy = true; correct++; good(); SFX.ok(); vib(20); hitFX(R.fx, p, right.c); addScore(100 + Math.max(0, Math.round((perQ - qT) * 10)), p); toast(`✅ ${q[4] ? '' : '<b>' + q[1] + '</b> → '}${right.e} ${esc(ansName(q, right))}<br>${q[3]}`, q[4] ? 3200 : 2400); next(1300); }
       else {
         if (useShield(p)) return;
         busy = true; bad(); SFX.bad(); vib([30, 40, 30]); missFX(p); addScore(-20, p);
-        toast(`❌ <b>${q[1]}</b> → ที่ถูกคือ ${right.e} <b>${right.p || right.label}</b><br>${q[3]}`, 3200); lines.push(`❌ ${q[0]} ${q[1]} → ${right.p || right.label} · ${q[3]}`); next(2200);
+        toast(`❌ ${q[4] ? '' : '<b>' + q[1] + '</b> → '}ที่ถูกคือ <b>${q[4] ? esc(ansName(q, right)) : right.e + ' ' + (right.p || right.label)}</b><br>${q[3]}`, q[4] ? 4200 : 3200); lines.push(`❌ ${q[4] ? '' : q[0] + ' '}${esc(q[1])} → ${esc(q[4] ? ansName(q, right) : (right.p || right.label))} · ${q[3]}`); next(q[4] ? 3200 : 2200);
       }
     },
     miss() {},
@@ -1280,6 +1358,14 @@ const SCENES = [
   { id: 'sink', emoji: '🧼', name: 'จุดล้างมือ', sub: 'ล้างมือ 7 ขั้นตอน', grad: 'linear-gradient(135deg,#06b6d4,#2563eb)', build: buildSink,
     mode: cfg => SeqMode(cfg, { items: HW, phases: HW_PHASES, z: -1.1, intro: '🧼 ปาเป้าท่าล้างมือ <b>ตามลำดับ 7 ขั้นตอน</b>' }),
     desc: ['เรียง 7 ขั้นตอน เป้าแกว่งเบาๆ', 'เป้าแกว่งแรงขึ้น', 'เป้าสลับตำแหน่งทุกครั้งที่ปาถูก'] },
+  { id: 'quiz', emoji: '📝', name: 'ห้องประชุม IC', sub: 'ตอบคำถาม 4 ตัวเลือก', grad: 'linear-gradient(135deg,#f59e0b,#be185d)', build: buildQuizRoom,
+    mode: cfg => QuizMode(cfg, { boards: [{ k: 'a', e: 'ก', c: '#2563eb' }, { k: 'b', e: 'ข', c: '#16a34a' }, { k: 'c', e: 'ค', c: '#ea580c' }, { k: 'd', e: 'ง', c: '#9333ea' }],
+      get qs() { return QUIZ_BANK.map(b => { const ch = shuffle([b.a].concat(b.w)); return ['❓', b.q, 'abcd'[ch.indexOf(b.a)], esc(b.x || ''), ch]; }); },
+      noCover: true, n: [8, 10, 12], perQ: 14, r: .4, rP: .34, shuffle: true, maxX: .35,
+      pos: (i, P) => P ? [i % 2 ? 0.7 : -0.7, i < 2 ? 1.35 : 0.55, -0.5] : [(i - 1.5) * 1.75, 1.15, -1.0], moveX: [0, .2, .4], moveY: [0, .05, .1],
+      qName: 'ข้อที่', ask: 'ปาเป้าตัวอักษรของคำตอบที่ถูกต้อง', intro: '📝 อ่านคำถามและตัวเลือก แล้วปาเป้า <b>ก ข ค ง</b> ของคำตอบที่ถูก',
+      sum: '📚 ทบทวนคำถามที่ตอบผิดด้านบน แล้วลองใหม่ให้ได้ 3 ดาว' }),
+    desc: ['คำถาม 8 ข้อ เป้านิ่ง', 'คำถาม 10 ข้อ เป้าขยับ', 'คำถาม 12 ข้อ เป้าสลับตำแหน่งทุก 3 ข้อ'] },
   { id: 'er', emoji: '🚑', name: 'ห้องฉุกเฉิน', sub: 'Isolation Precautions', grad: 'linear-gradient(135deg,#dc2626,#9333ea)', build: buildER,
     mode: cfg => QuizMode(cfg, { boards: PREC.map(b => ({ k: b.k, e: b.e, label: b.label, c: b.c, p: b.p })), qs: PREC_Q, n: [6, 8, 10], perQ: 10, r: .42, rP: .4, shuffle: true, maxX: .35,
       pos: (i, P) => P ? [i % 2 ? 0.75 : -0.75, i < 2 ? 2.5 : 1.4, -1.2] : [(i - 1.5) * 1.8, i % 2 ? 1.6 : 2.35, -1.4], moveX: [.05, .25, .45], moveY: [.03, .08, .12],
@@ -1287,9 +1373,10 @@ const SCENES = [
       sum: '📌 Standard Precautions ใช้กับผู้ป่วยทุกราย แล้วเพิ่ม Transmission-based ตามช่องทางแพร่เชื้อ' }),
     desc: ['6 ราย เป้าขยับเบาๆ', '8 ราย เป้าเร็วขึ้น', '10 ราย เป้าสลับตำแหน่งทุก 3 ราย'] },
 ];
+SCENES.push(SCENES.splice(SCENES.findIndex(s => s.id === 'quiz'), 1)[0]);
 const LEVELS = [];
 for (let lv = 1; lv <= 3; lv++) SCENES.forEach((s, si) => LEVELS.push({ id: s.id + '-' + lv, si, lv, no: LEVELS.length + 1 }));
-const unlocked = i => i === 0 || ((prof().best[LEVELS[i - 1].id] || {}).st || 0) >= 1;
+const unlocked = i => i === 0 || ((prof().best[LEVELS[i].id] || {}).st || 0) >= 1 || ((prof().best[LEVELS[i - 1].id] || {}).st || 0) >= 1;
 
 /* ================= Scene lifecycle ================= */
 function clearWorld() {
@@ -1815,7 +1902,7 @@ fontsReady.catch(() => {}).then(() => {
   $('loading').style.display = 'none';
   equipHeldDart();
   if (prof()) renderHome(); else renderReg();
-  loop(); flushQueue(); hello(); setInterval(hello, 20000);
+  loop(); flushQueue(); loadContent(); hello(); setInterval(hello, 20000);
   const qr = new URLSearchParams(location.search).get('room'); if (qr && prof()) setTimeout(() => joinByCode(qr), 600); else if (qr) store.set('pendingRoom', qr);
   window.__icdarts = { LEVELS, SCENES, startLevel, openPre, renderShop, renderStats, renderHome, newProfile, prof, get targets() { return targets; }, get mode() { return mode; }, shoot(sx, sy) { shoot(sx, sy); }, project(v) { const p = v.clone().project(camera); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }, get score() { return score; }, get R() { return R; }, useHint, dbg() { return { handState, throwT, pending: !!pendingShot, flying: flying.length, playing, ended }; } };
 });
