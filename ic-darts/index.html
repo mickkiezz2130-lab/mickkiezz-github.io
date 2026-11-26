@@ -37,7 +37,7 @@ input,select{font-family:inherit;font-size:16px}
 #tools .tb small{position:absolute;right:-4px;top:-6px;background:#f59e0b;color:#111;border-radius:10px;font-size:12px;font-weight:800;padding:0 6px}
 #tools .tb.off{opacity:.35}
 #tools .act{width:52px;text-align:center;font-size:20px;padding:4px 0}
-#hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);padding:8px 16px;font-size:14px;display:none;pointer-events:none;z-index:5;white-space:nowrap}
+#hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);padding:8px 16px;font-size:14px;display:none;pointer-events:none;z-index:5;width:max-content;max-width:92vw;text-align:center}
 #aim{position:fixed;width:46px;height:46px;margin:-23px 0 0 -23px;pointer-events:none;display:none;z-index:6}
 #aim:before,#aim:after{content:"";position:absolute;background:#fff;box-shadow:0 0 4px #000}
 #aim:before{left:22px;top:0;width:2px;height:46px}#aim:after{top:22px;left:0;height:2px;width:46px}
@@ -160,6 +160,18 @@ tr.meRow td{background:rgba(103,232,249,.12)}
 .tag{font-size:11px;padding:1px 7px;border-radius:8px;background:rgba(255,255,255,.12)}
 #toast button{margin:8px 6px 0 0;padding:7px 12px;border-radius:10px;border:0;font-weight:800;background:#86efac;color:#111}
 #toast{pointer-events:auto}
+/* ปุ่มควบคุมสำหรับมือถือ/ไอแพด */
+#ctrl{position:fixed;left:0;right:0;bottom:0;z-index:9;display:none;align-items:flex-end;gap:10px;padding:8px 10px calc(env(safe-area-inset-bottom,0px) + 10px);pointer-events:none}
+#ctrl .nums{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;pointer-events:auto}
+#ctrl .nb{min-width:48px;height:48px;padding:0 10px;border-radius:14px;border:2px solid rgba(255,255,255,.35);background:rgba(15,23,42,.72);font-size:20px;font-weight:800;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);touch-action:manipulation}
+#ctrl .nb:active{transform:scale(.92);background:#0e7490}
+#ctrl .fire{pointer-events:auto;width:84px;height:84px;border-radius:50%;border:4px solid #fde68a;background:radial-gradient(circle at 35% 30%,#fb923c,#dc2626);font-size:30px;font-weight:800;line-height:1;box-shadow:0 6px 20px rgba(0,0,0,.5);touch-action:manipulation;flex:none}
+#ctrl .fire small{display:block;font-size:14px}
+#ctrl .fire:active{transform:scale(.92)}
+#ctrl .fire:disabled{filter:grayscale(1) brightness(.7)}
+.badge{position:fixed;z-index:6;transform:translate(-50%,-50%);min-width:30px;height:30px;padding:0 6px;border-radius:15px;background:#fde68a;color:#0f172a;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);border:2px solid #0f172a;pointer-events:none}
+body.btnmode #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)}
+body.btnmode #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)}
 #modal{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.6);padding:16px}
 #modal .panel{max-width:380px;text-align:center}
 </style>
@@ -174,12 +186,15 @@ tr.meRow td{background:rgba(103,232,249,.12)}
     <button class="btn" id="home-btn" title="ออกจากด่าน">☰</button>
     <div class="pill glass grow"><span id="h-scene">-</span><b id="h-task">-</b></div>
     <div class="pill glass" style="text-align:right">คะแนน<b id="h-score">0</b></div>
+    <button class="btn" id="ctrl-btn" title="สลับวิธีควบคุม: ปุ่มกด / ลากปล่อย">🎮</button>
   </div>
   <div id="card" class="glass"></div>
 </div>
 <div id="tools"></div>
 <div id="race" class="glass"></div>
 <div id="count"></div>
+<div id="ctrl"><div class="nums" id="nums"></div><button class="fire" id="fire">🎯<small>ปา!</small></button></div>
+<div id="badges"></div>
 <div id="hint" class="glass">👆 แตะค้างเพื่อง้างลูกดอก · ปล่อยนิ้วเพื่อปา</div>
 <div id="aim"><i></i></div>
 <div id="fx"></div>
@@ -1408,7 +1423,7 @@ function startLevel(li, diffIdx, chosen, match, sub) {
   equipHeldDart();
   sub = sub || (match && match.room && match.room.sub) || (S.subs ? (p.sub && p.sub[S.id]) || S.subs[0][0] : '');
   if (S.subs) $('h-scene').textContent += ' · ' + S.subs.find(x => x[0] === sub)[1];
-  mode = S.mode({ lv: L.lv, F: R.F, sub }); mode.start(); renderTools(); renderRace(); netStatus('play');
+  mode = S.mode({ lv: L.lv, F: R.F, sub }); mode.start(); btnAim = null; numList = []; applyCtrl(); renderTools(); renderRace(); netStatus('play');
   setTimeout(() => { $('hint').style.display = 'none'; }, 5000);
 }
 function renderTools() {
@@ -1425,7 +1440,7 @@ function useHint() {
   const p = prof(); if ((p.inv.hint || 0) <= 0) return; p.inv.hint--; R.hintLeft--; saveProf(); glow(t); SFX.coin(); renderTools(); toast('💡 เป้าที่ถูกต้องกำลังเรืองแสง!', 1800);
 }
 function finish(r) {
-  if (ended) return; ended = true; playing = false; aiming = false; $('aim').style.display = 'none'; renderTools(); clearGlow();
+  if (ended) return; ended = true; playing = false; aiming = false; btnAim = null; $('aim').style.display = 'none'; applyCtrl(); renderTools(); clearGlow();
   SFX.end(); const L = LEVELS[curLevel], S = SCENES[L.si], p = prof();
   const stars = r.ratio >= 0.85 ? 3 : r.ratio >= 0.55 ? 2 : r.ratio >= 0.25 ? 1 : 0;
   const prev = p.best[L.id] || { s: 0, st: 0 }; const first = stars >= 1 && !prev.st; const isBest = score > prev.s;
@@ -1456,7 +1471,7 @@ function finish(r) {
 
 /* ================= Screens ================= */
 function renderHome() {
-  const p = prof(); leaveMatch(); netStatus('menu'); playing = false; ended = false; aiming = false; $('aim').style.display = 'none'; $('hud').style.display = 'none'; $('hint').style.display = 'none'; hideToast(); renderTools();
+  const p = prof(); leaveMatch(); netStatus('menu'); playing = false; ended = false; aiming = false; btnAim = null; applyCtrl(); $('aim').style.display = 'none'; $('hud').style.display = 'none'; $('hint').style.display = 'none'; hideToast(); renderTools();
   $('m-av').textContent = (p.name || '?').trim().charAt(0); $('m-name').textContent = p.name; $('m-unit').textContent = p.unit; $('m-coin').textContent = '🪙 ' + p.coins; renderSync();
   let next = LEVELS.findIndex((L, i) => unlocked(i) && !((p.best[L.id] || {}).st));
   let h = '';
@@ -1800,12 +1815,48 @@ function randomInvite(n) {
 let aiming = false, aimX = 0, aimY = 0, ptrX = 0, ptrY = 0, touchOffset = 0, lastThrow = 0, holdT = 0, aimP = 0;
 let handState = 'idle', throwT = 0, pendingShot = null;
 const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2();
+/* ---- โหมดปุ่มกด (มือถือ/ไอแพด): แตะเพื่อวางเป้าเล็ง แล้วกด 🎯 ปา · หรือกดหมายเลขเป้า ---- */
+const COARSE = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
+const btnMode = () => { const p = prof(); return ((p && p.ctrl) || (COARSE ? 'btn' : 'drag')) === 'btn'; };
+let btnAim = null; const badgeEls = []; let numList = [];
+function applyCtrl() {
+  const on = playing && btnMode(); document.body.classList.toggle('btnmode', on);
+  $('ctrl').style.display = on ? 'flex' : 'none'; if (!on) { $('badges').innerHTML = ''; badgeEls.length = 0; }
+  $('hint').innerHTML = btnMode() ? '👆 แตะจอเพื่อวางเป้าเล็ง แล้วกด <b>🎯 ปา</b> · หรือกด <b>หมายเลขเป้า</b>' : '👆 แตะค้างเพื่อง้างลูกดอก · ปล่อยนิ้วเพื่อปา';
+  $('ctrl-btn').textContent = btnMode() ? '🎮' : '✋';
+}
+$('ctrl-btn').onclick = () => { const p = prof(); if (!p) return; p.ctrl = btnMode() ? 'drag' : 'btn'; saveProf(); btnAim = null; $('aim').style.display = 'none'; applyCtrl(); toast(btnMode() ? '🎮 โหมดปุ่มกด: แตะจอเพื่อเล็ง แล้วกด 🎯 ปา หรือกดหมายเลขเป้า' : '✋ โหมดลากปล่อย: แตะค้างเพื่อเล็ง ปล่อยนิ้วเพื่อปา', 2600); };
+const canThrow = () => playing && handState !== 'throw' && performance.now() - lastThrow > 300;
+function swayOff(T, amp) { return [Math.sin(T * 2.1) * amp + Math.sin(T * 5.3) * amp * 0.35, Math.cos(T * 1.7) * amp * 0.8 + Math.sin(T * 4.1) * amp * 0.3]; }
+$('fire').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); audio(); if (!canThrow()) return; if (!btnAim) { aimX = innerWidth / 2; aimY = innerHeight * 0.45; } vib(15); shoot(aimX, aimY); });
+function throwAtNumber(k) {
+  const t = numList[k - 1]; if (!t || !t.alive || !canThrow()) return; audio(); vib(15);
+  const v = new THREE.Vector3(); t.g.userData.face.getWorldPosition(v); const [x, y] = project(v);
+  const amp = 6 * R.F.sway * (R.steady ? 0.12 : 1); const [ox, oy] = swayOff(clk.elapsedTime, amp);
+  aimX = x + ox; aimY = y + oy; btnAim = { x, y }; shoot(aimX, aimY);
+}
+function project(v) { const p = v.clone().project(camera); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }
+function updButtons() {
+  if (!playing || !btnMode()) return;
+  const vis = targets.filter(t => t.alive && t.g.userData.face).map(t => { const v = new THREE.Vector3(); t.g.userData.face.getWorldPosition(v); const [x, y] = project(v); return { t, x, y, ok: x > 10 && x < innerWidth - 10 && y > 60 && y < innerHeight - 100 && v.clone().project(camera).z < 1 }; })
+    .filter(o => o.ok).sort((a, b) => (Math.abs(a.y - b.y) > 90 ? a.y - b.y : a.x - b.x)).slice(0, 9);
+  const ids = vis.map(o => o.t);
+  if (ids.length !== numList.length || ids.some((t, i) => t !== numList[i])) {
+    numList = ids;
+    $('nums').innerHTML = numList.map((t, i) => `<button class="nb" data-k="${i + 1}">${i + 1}</button>`).join('');
+    $('nums').querySelectorAll('.nb').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); throwAtNumber(+b.dataset.k); }));
+  }
+  while (badgeEls.length < vis.length) { const d = document.createElement('div'); d.className = 'badge'; $('badges').appendChild(d); badgeEls.push(d); }
+  badgeEls.forEach((d, i) => { const o = vis[i]; if (!o) { d.style.display = 'none'; return; } const r = (o.t.g.userData.r || 0.35); d.style.display = 'flex'; d.textContent = i + 1; d.style.left = (o.x + r * innerHeight * 0.12) + 'px'; d.style.top = (o.y - r * innerHeight * 0.12) + 'px'; });
+  $('fire').disabled = !canThrow();
+}
 canvas.addEventListener('pointerdown', e => {
+  if (playing && btnMode()) { audio(); e.preventDefault(); aiming = false; holdT = 0; touchOffset = e.pointerType === 'mouse' ? 0 : Math.min(90, innerHeight * 0.1); btnAim = { x: e.clientX, y: e.clientY - touchOffset }; $('aim').style.display = 'block'; $('aim').classList.toggle('steady', R.steady); $('hint').style.display = 'none'; return; }
   if (!playing || handState === 'throw') return; audio(); e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
   aiming = true; holdT = 0; touchOffset = e.pointerType === 'mouse' ? 0 : Math.min(110, innerHeight * 0.12);
   ptrX = e.clientX; ptrY = e.clientY; $('aim').style.display = 'block'; $('aim').classList.toggle('steady', R.steady); $('hint').style.display = 'none';
 });
-canvas.addEventListener('pointermove', e => { if (aiming) { ptrX = e.clientX; ptrY = e.clientY; } });
+canvas.addEventListener('pointermove', e => { if (aiming) { ptrX = e.clientX; ptrY = e.clientY; } else if (btnAim && playing && btnMode() && e.buttons) btnAim = { x: e.clientX, y: e.clientY - touchOffset }; });
 canvas.addEventListener('pointerup', () => { if (!aiming) return; aiming = false; $('aim').style.display = 'none'; if (playing && performance.now() - lastThrow > 300) shoot(aimX, aimY); });
 canvas.addEventListener('pointercancel', () => { aiming = false; $('aim').style.display = 'none'; });
 
@@ -1882,7 +1933,11 @@ function loop() {
     aimX = ptrX + Math.sin(T * 2.1) * amp + Math.sin(T * 5.3) * amp * 0.35;
     aimY = ptrY - touchOffset + Math.cos(T * 1.7) * amp * 0.8 + Math.sin(T * 4.1) * amp * 0.3;
     const a = $('aim'); a.style.left = aimX + 'px'; a.style.top = aimY + 'px';
+  } else if (playing && btnAim && btnMode()) {
+    const amp = 6 * R.F.sway * (R.steady ? 0.12 : 1); const [ox, oy] = swayOff(T, amp);
+    aimX = btnAim.x + ox; aimY = btnAim.y + oy; const a = $('aim'); a.style.display = 'block'; a.style.left = aimX + 'px'; a.style.top = aimY + 'px';
   }
+  updButtons();
   if (!playing && !ended) {
     showcaseT += dt;
     camera.position.set(camBase.pos.x + Math.sin(T * 0.25) * 1.6, camBase.pos.y + 0.3, camBase.pos.z - 0.5 + Math.cos(T * 0.25) * 0.5);
